@@ -44,9 +44,16 @@ p{color:#555;line-height:1.6;font-size:0.9rem}
 </div></body></html>`;
 
 const extractCode = (text) => {
-  const m = text.match(/```(?:html|[a-z]*)?\n([\s\S]*?)```/i);
-  return m ? m[1].trim() : null;
+  // Try fenced code block first (with or without language tag, flexible whitespace)
+  const m = text.match(/```(?:html|[a-z]*)?\s*\n?([\s\S]*?)```/i);
+  if (m) return m[1].trim();
+  // Fallback: grab anything that looks like a full HTML doc
+  const h = text.match(/(<!DOCTYPE html[\s\S]*<\/html>)/i);
+  return h ? h[1].trim() : null;
 };
+
+const FREE_CREDIT_LIMIT = 4000;
+const PRO_PRICE = "$12.99/mo";
 
 const QUICK = ["Snake game","Tetris","Todo app","Calculator","Tic tac toe","Pomodoro timer","Kanban board","Landing page"];
 const AQUICK = ["Review my code","Suggest features","Add dark mode","Fix any bugs"];
@@ -59,6 +66,8 @@ const C = {
 
 export default function App() {
   const [authed, setAuthed] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [lu, setLu] = useState(""); const [lp, setLp] = useState(""); const [le, setLe] = useState("");
   const [view, setView] = useState("ide");
   const [adminTab, setAdminTab] = useState("dashboard");
@@ -89,7 +98,7 @@ export default function App() {
   const callAPI = async (system, messages) => {
     const r = await fetch("/api/chat",{
       method:"POST", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:MODEL, max_tokens:1000, system, messages}),
+      body:JSON.stringify({model:MODEL, max_tokens:4096, system, messages}),
     });
     if(!r.ok) throw new Error(`API error ${r.status}`);
     return r.json();
@@ -98,6 +107,8 @@ export default function App() {
   const send = async () => {
     const p = input.trim();
     if(!p||loading) return;
+    // Credit check for non-admins
+    if(!isAdmin && tokens >= FREE_CREDIT_LIMIT) { setShowUpgrade(true); return; }
     setInput("");
     setMsgs(m=>[...m,{role:"user",content:p}]);
     setLoading(true);
@@ -145,7 +156,7 @@ export default function App() {
 
   const handleKey = (e)=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();} };
   const handleAdminKey = (e)=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendAdmin();} };
-  const login = ()=>{ if(lu===ADMIN_USER&&lp===ADMIN_PASS){setAuthed(true);setLe("");}else setLe("Invalid credentials"); };
+  const login = ()=>{ if(lu===ADMIN_USER&&lp===ADMIN_PASS){setAuthed(true);setIsAdmin(true);setLe("");}else setLe("Invalid credentials"); };
 
   // ── LOGIN ──────────────────────────────────────────────────────
   if(!authed) return (
@@ -308,9 +319,39 @@ export default function App() {
     </div>
   );
 
+  // ── UPGRADE MODAL ──────────────────────────────────────────────
+  const UpgradeModal = () => showUpgrade && (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,fontFamily:"monospace"}}>
+      <div style={{background:C.panel,border:`1px solid ${C.accent}`,borderRadius:10,padding:36,maxWidth:380,width:"90%",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:12}}>⚡</div>
+        <div style={{fontSize:22,fontWeight:900,color:C.accent,marginBottom:6}}>You've hit the free limit!</div>
+        <div style={{fontSize:13,color:C.muted,marginBottom:24,lineHeight:1.7}}>
+          You've used all <strong style={{color:C.text}}>{FREE_CREDIT_LIMIT.toLocaleString()} free credits</strong>.<br/>
+          Upgrade to <strong style={{color:C.accent}}>Forge Pro</strong> for unlimited builds.
+        </div>
+        <div style={{background:C.accentDim,border:`1px solid ${C.accent}`,borderRadius:8,padding:"18px 20px",marginBottom:20}}>
+          <div style={{fontSize:32,fontWeight:900,color:C.accent}}>{PRO_PRICE}</div>
+          <div style={{fontSize:11,color:C.muted,letterSpacing:2,marginTop:4}}>PER MONTH</div>
+          <div style={{marginTop:12,display:"flex",flexDirection:"column",gap:6,textAlign:"left"}}>
+            {["✓ Unlimited AI builds","✓ All app types & games","✓ Priority generation","✓ Full history access"].map(f=>(
+              <div key={f} style={{fontSize:12,color:C.text}}>{f}</div>
+            ))}
+          </div>
+        </div>
+        <button style={{width:"100%",background:C.accent,border:"none",color:"#fff",padding:"13px 0",fontFamily:"monospace",fontSize:15,fontWeight:900,cursor:"pointer",borderRadius:6,letterSpacing:2,marginBottom:10}}>
+          UPGRADE TO PRO →
+        </button>
+        <button onClick={()=>setShowUpgrade(false)} style={{width:"100%",background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"10px 0",fontFamily:"monospace",fontSize:12,cursor:"pointer",borderRadius:6}}>
+          Maybe later
+        </button>
+      </div>
+    </div>
+  );
+
   // ── MAIN IDE — TOP/BOTTOM LAYOUT ───────────────────────────────
   return (
     <div style={{height:"100vh",background:C.bg,fontFamily:"monospace",color:C.text,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <UpgradeModal />
 
       {/* TOP BAR */}
       <div style={{height:44,background:C.sidebar,borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",padding:"0 14px",gap:10,flexShrink:0}}>
@@ -320,6 +361,15 @@ export default function App() {
         <span style={{fontSize:10,color:C.muted}}>AI READY</span>
         <div style={{flex:1}}/>
         {history.length>0&&<span style={{fontSize:10,color:C.muted}}>Last: {history[0]?.prompt?.slice(0,20)}...</span>}
+        {!isAdmin&&(
+          <div style={{display:"flex",alignItems:"center",gap:6,background:C.panel,border:`1px solid ${C.border}`,borderRadius:4,padding:"4px 10px"}}>
+            <div style={{width:60,height:5,background:C.border,borderRadius:3,overflow:"hidden"}}>
+              <div style={{width:`${Math.min(100,(tokens/FREE_CREDIT_LIMIT)*100)}%`,height:"100%",background:tokens>=FREE_CREDIT_LIMIT?C.red:C.accent,borderRadius:3,transition:"width 0.3s"}}/>
+            </div>
+            <span style={{fontSize:9,color:tokens>=FREE_CREDIT_LIMIT?C.red:C.muted}}>{tokens.toLocaleString()}/{FREE_CREDIT_LIMIT.toLocaleString()}</span>
+          </div>
+        )}
+        {isAdmin&&<span style={{fontSize:9,color:C.green,background:"#0a1a0a",border:`1px solid ${C.green}`,padding:"3px 8px",borderRadius:3}}>∞ ADMIN</span>}
         <button onClick={()=>setView("admin")} style={{background:C.accentDim,border:`1px solid ${C.accent}`,color:C.accent,padding:"5px 14px",fontFamily:"monospace",fontSize:10,cursor:"pointer",fontWeight:700,borderRadius:3}}>⚙ ADMIN</button>
         <button onClick={()=>setAuthed(false)} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"5px 10px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:3}}>LOG OUT</button>
       </div>
