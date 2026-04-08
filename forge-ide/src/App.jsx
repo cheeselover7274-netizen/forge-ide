@@ -3,6 +3,8 @@ import { useState, useRef, useEffect } from "react";
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "forge2024";
 const MODEL = "claude-sonnet-4-20250514";
+const FREE_CREDIT_LIMIT = 4000;
+const PRO_PRICE = "$12.99/mo";
 
 const FORGE_SYSTEM = `You are Forge, a world-class AI software engineer. Build ANYTHING the user asks for.
 
@@ -24,114 +26,108 @@ ALWAYS use EXACTLY this format:
 
 For EDIT/FIX: output the FULL updated file`;
 
-const STARTER = `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"/><title>Forge</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{min-height:100vh;display:flex;align-items:center;justify-content:center;
-background:linear-gradient(135deg,#0d0d0d,#0a0a14);font-family:'Courier New',monospace;color:#e0e0e0}
-.card{text-align:center;padding:40px;border:1px solid #1e1e2e;background:rgba(124,109,250,0.05);max-width:400px}
-h1{font-size:1.8rem;color:#7c6dfa;margin-bottom:10px}
-p{color:#555;line-height:1.6;font-size:0.9rem}
-.hint{margin-top:16px;font-size:.75rem;color:#333;border-top:1px solid #1e1e2e;padding-top:14px}
-</style></head>
-<body><div class="card">
-<div style="font-size:40px;margin-bottom:12px">⚡</div>
-<h1>Forge IDE</h1>
-<p>Your AI is ready!<br/>Type what to build below.</p>
-<div class="hint">"Build a snake game" · "Make a calculator" · "Create a todo app"</div>
-</div></body></html>`;
+const STARTER = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>Forge</title><style>*{margin:0;padding:0;box-sizing:border-box}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0d0d0d,#0a0a14);font-family:'Courier New',monospace;color:#e0e0e0}.card{text-align:center;padding:40px;border:1px solid #1e1e2e;background:rgba(124,109,250,0.05);max-width:400px}h1{font-size:1.8rem;color:#7c6dfa;margin-bottom:10px}p{color:#555;line-height:1.6;font-size:0.9rem}</style></head><body><div class="card"><div style="font-size:40px;margin-bottom:12px">⚡</div><h1>Forge IDE</h1><p>Your AI is ready!<br/>Type what to build below.</p></div></body></html>`;
 
 const extractCode = (text) => {
-  // Try fenced code block first (with or without language tag, flexible whitespace)
   const m = text.match(/```(?:html|[a-z]*)?\s*\n?([\s\S]*?)```/i);
   if (m) return m[1].trim();
-  // Fallback: grab anything that looks like a full HTML doc
   const h = text.match(/(<!DOCTYPE html[\s\S]*<\/html>)/i);
   return h ? h[1].trim() : null;
 };
 
-const FREE_CREDIT_LIMIT = 4000;
-const PRO_PRICE = "$12.99/mo";
+const extractTheme = (text) => {
+  const m = text.match(/```json\s*([\s\S]*?)```/i);
+  if (!m) return null;
+  try { return JSON.parse(m[1]); } catch { return null; }
+};
 
-const QUICK = ["Snake game","Tetris","Todo app","Calculator","Tic tac toe","Pomodoro timer","Kanban board","Landing page"];
-const AQUICK = ["Review my code","Suggest features","Add dark mode","Fix any bugs"];
-
-const C = {
+const DEFAULT_THEME = {
   bg:"#e8f0fe", sidebar:"#c8d8f8", panel:"#dce8ff", border:"#a0b8e8",
   accent:"#4a6ef5", accentDim:"#4a6ef520", green:"#22c55e",
   text:"#1a2a4a", muted:"#6080b0", chatBg:"#f0f5ff", inputBg:"#ffffff", red:"#ef4444",
 };
+
+const QUICK = ["Snake game","Tetris","Todo app","Calculator","Tic tac toe","Pomodoro timer","Kanban board","Landing page"];
+const AQUICK = ["Change theme to dark","Change theme to purple","Make it green","Reset to light blue","Review current build"];
+const EXAMPLES = ["Build a snake game with neon visuals","Create a todo app with drag and drop","Make a Tetris clone","Build a pomodoro timer","Create a music visualizer","Make a pixel art editor"];
 
 export default function App() {
   const [authed, setAuthed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [lu, setLu] = useState(""); const [lp, setLp] = useState(""); const [le, setLe] = useState("");
-  const [view, setView] = useState("ide");
+  const [view, setView] = useState("home");
   const [adminTab, setAdminTab] = useState("dashboard");
   const [previewHtml, setPreviewHtml] = useState(STARTER);
   const [previewKey, setPreviewKey] = useState(0);
-  const [msgs, setMsgs] = useState([
-    {role:"assistant", content:"Hey! I'm Forge ⚡\n\nI can build anything — games, apps, tools, dashboards.\n\nTap a quick prompt or type below!"}
-  ]);
+  const [msgs, setMsgs] = useState([{role:"assistant",content:"Hey! I'm Forge ⚡\n\nI can build anything — games, apps, tools, dashboards.\n\nTap a quick prompt or type below!"}]);
   const [input, setInput] = useState("");
+  const [homeInput, setHomeInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [adminMsgs, setAdminMsgs] = useState([
-    {role:"assistant", content:"Hello Admin 👋\n\nI'm Claude Sonnet 4 with full context of your IDE.\n\nI can review your code, suggest features, or answer any question.\n\nWhat do you need?"}
-  ]);
+  const [adminMsgs, setAdminMsgs] = useState([{role:"assistant",content:"Hello Admin 👋\n\nI'm your live AI co-pilot. I can change the IDE colours and theme in real time!\n\nTry: \"Change theme to dark\" or \"Make the accent orange\""}]);
   const [adminInput, setAdminInput] = useState("");
   const [adminLoading, setAdminLoading] = useState(false);
   const [history, setHistory] = useState([]);
   const [tokens, setTokens] = useState(0);
   const [calls, setCalls] = useState(0);
+  const [C, setC] = useState(DEFAULT_THEME);
+  const [typed, setTyped] = useState("");
+  const [exIdx, setExIdx] = useState(0);
 
   const chatEnd = useRef(null);
   const adminEnd = useRef(null);
   const inputRef = useRef(null);
   const adminRef = useRef(null);
 
+  useEffect(() => {
+    let t;
+    const target = EXAMPLES[exIdx];
+    if (typed.length < target.length) {
+      t = setTimeout(() => setTyped(target.slice(0, typed.length + 1)), 50);
+    } else {
+      t = setTimeout(() => { setTyped(""); setExIdx(i => (i+1) % EXAMPLES.length); }, 2200);
+    }
+    return () => clearTimeout(t);
+  }, [typed, exIdx]);
+
   useEffect(()=>{ chatEnd.current?.scrollIntoView({behavior:"smooth"}); },[msgs,loading]);
   useEffect(()=>{ adminEnd.current?.scrollIntoView({behavior:"smooth"}); },[adminMsgs,adminLoading]);
 
   const callAPI = async (system, messages) => {
-    const r = await fetch("/api/chat",{
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:MODEL, max_tokens:4096, system, messages}),
-    });
+    const r = await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:MODEL,max_tokens:4096,system,messages})});
     if(!r.ok) throw new Error(`API error ${r.status}`);
     return r.json();
+  };
+
+  const runBuild = async (prompt, currentHtml) => {
+    const apiMsgs = [...msgs.map(m=>({role:m.role,content:m.content})),{role:"user",content:`${prompt}\n\nCurrent code: ${currentHtml.slice(0,300)}`}];
+    const data = await callAPI(FORGE_SYSTEM, apiMsgs);
+    const reply = data.content?.map(b=>b.text||"").join("")||"No response.";
+    const code = extractCode(reply);
+    setMsgs(m=>[...m,{role:"assistant",content:reply,hasCode:!!code}]);
+    setCalls(c=>c+1);
+    const tok=(data.usage?.input_tokens||0)+(data.usage?.output_tokens||0);
+    setTokens(t=>t+tok);
+    if(code){ setPreviewHtml(code); setPreviewKey(k=>k+1); setHistory(h=>[{id:Date.now(),prompt,time:new Date().toLocaleTimeString(),tok},...h].slice(0,100)); }
+  };
+
+  const startBuilding = async (prompt) => {
+    if(!prompt.trim()) return;
+    setView("ide");
+    setLoading(true);
+    setMsgs(m=>[...m,{role:"user",content:prompt}]);
+    try { await runBuild(prompt, STARTER); } catch(e){ setMsgs(m=>[...m,{role:"assistant",content:`⚠️ Error: ${e.message}`}]); }
+    setLoading(false);
   };
 
   const send = async () => {
     const p = input.trim();
     if(!p||loading) return;
-    // Credit check for non-admins
     if(!isAdmin && tokens >= FREE_CREDIT_LIMIT) { setShowUpgrade(true); return; }
     setInput("");
     setMsgs(m=>[...m,{role:"user",content:p}]);
     setLoading(true);
-    const apiMsgs = [
-      ...msgs.map(m=>({role:m.role,content:m.content})),
-      {role:"user", content:`${p}\n\nCurrent code: ${previewHtml.slice(0,300)}`}
-    ];
-    try {
-      const data = await callAPI(FORGE_SYSTEM, apiMsgs);
-      const reply = data.content?.map(b=>b.text||"").join("")||"No response.";
-      const code = extractCode(reply);
-      setMsgs(m=>[...m,{role:"assistant",content:reply,hasCode:!!code}]);
-      setCalls(c=>c+1);
-      const tok=(data.usage?.input_tokens||0)+(data.usage?.output_tokens||0);
-      setTokens(t=>t+tok);
-      if(code){
-        setPreviewHtml(code);
-        setPreviewKey(k=>k+1);
-        setHistory(h=>[{id:Date.now(),prompt:p,time:new Date().toLocaleTimeString(),tok},...h].slice(0,100));
-      }
-    } catch(e){
-      setMsgs(m=>[...m,{role:"assistant",content:`⚠️ Error: ${e.message}`}]);
-    }
+    try { await runBuild(p, previewHtml); } catch(e){ setMsgs(m=>[...m,{role:"assistant",content:`⚠️ Error: ${e.message}`}]); }
     setLoading(false);
     setTimeout(()=>inputRef.current?.focus(),100);
   };
@@ -142,12 +138,34 @@ export default function App() {
     setAdminInput("");
     setAdminMsgs(m=>[...m,{role:"user",content:p}]);
     setAdminLoading(true);
-    const sys = `You are Claude Sonnet 4 in the private admin panel of Forge IDE. Admin only.\nCalls: ${calls} | Tokens: ${tokens} | Builds: ${history.length}\nCurrent code: ${previewHtml.slice(0,300)}\nBe direct and expert.`;
-    const apiMsgs = [...adminMsgs.map(m=>({role:m.role,content:m.content})),{role:"user",content:p}];
+    const ADMIN_SYS = `You are Claude, the live admin AI for Forge IDE. You can change the app theme in real time.
+
+CURRENT THEME: ${JSON.stringify(C)}
+STATS: Calls:${calls} Tokens:${tokens} Builds:${history.length}
+
+If user asks to change theme/colours, respond with a short message AND this exact JSON block:
+\`\`\`json
+{"bg":"#hex","sidebar":"#hex","panel":"#hex","border":"#hex","accent":"#hex","accentDim":"#hex20","green":"#22c55e","text":"#hex","muted":"#hex","chatBg":"#hex","inputBg":"#hex","red":"#ef4444"}
+\`\`\`
+
+PRESETS:
+- Dark: bg:#0b0b0f sidebar:#0e0e16 panel:#111118 border:#1c1c2e accent:#7c6dfa accentDim:#7c6dfa18 text:#c8c8e0 muted:#44445a chatBg:#0d0d16 inputBg:#13131f
+- Purple: bg:#1a0a2e sidebar:#2a1040 panel:#1e1030 border:#4a2060 accent:#a855f7 accentDim:#a855f720 text:#e8d8ff muted:#8060a0 chatBg:#160824 inputBg:#200a34
+- Green: bg:#0a1a12 sidebar:#0d2018 panel:#102418 border:#1a4028 accent:#10b981 accentDim:#10b98120 text:#d0f0e0 muted:#406050 chatBg:#081410 inputBg:#0a1a10
+- Orange: bg:#1a0f00 sidebar:#2a1800 panel:#1e1200 border:#4a2800 accent:#f97316 accentDim:#f9731620 text:#ffe8d0 muted:#806040 chatBg:#140a00 inputBg:#1a0f00
+- Light blue: bg:#e8f0fe sidebar:#c8d8f8 panel:#dce8ff border:#a0b8e8 accent:#4a6ef5 accentDim:#4a6ef520 text:#1a2a4a muted:#6080b0 chatBg:#f0f5ff inputBg:#ffffff
+
+Be concise and friendly.`;
     try {
-      const data = await callAPI(sys, apiMsgs);
+      const data = await callAPI(ADMIN_SYS, [...adminMsgs.map(m=>({role:m.role,content:m.content})),{role:"user",content:p}]);
       const reply = data.content?.map(b=>b.text||"").join("")||"No response.";
-      setAdminMsgs(m=>[...m,{role:"assistant",content:reply}]);
+      const theme = extractTheme(reply);
+      const displayReply = reply.replace(/```json[\s\S]*?```/gi,"").trim();
+      setAdminMsgs(m=>[...m,{role:"assistant",content:displayReply || "Theme updated!"}]);
+      if(theme && theme.bg) {
+        setC(prev=>({...prev,...theme}));
+        setAdminMsgs(m=>[...m,{role:"assistant",content:"✅ Theme applied live across the whole IDE!"}]);
+      }
       setCalls(c=>c+1); setTokens(t=>t+(data.usage?.input_tokens||0)+(data.usage?.output_tokens||0));
     } catch(e){ setAdminMsgs(m=>[...m,{role:"assistant",content:`⚠️ ${e.message}`}]); }
     setAdminLoading(false);
@@ -156,72 +174,159 @@ export default function App() {
 
   const handleKey = (e)=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();} };
   const handleAdminKey = (e)=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendAdmin();} };
+  const handleHomeKey = (e)=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();startBuilding(homeInput);} };
   const login = ()=>{ if(lu===ADMIN_USER&&lp===ADMIN_PASS){setAuthed(true);setIsAdmin(true);setLe("");}else setLe("Invalid credentials"); };
 
-  // ── LOGIN ──────────────────────────────────────────────────────
+  // LOGIN
   if(!authed) return (
-    <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"monospace",padding:16}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#06061a,#0e0830,#0a0a20)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"monospace",padding:16}}>
       <div style={{width:"100%",maxWidth:380}}>
         <div style={{textAlign:"center",marginBottom:28}}>
-          <div style={{fontSize:48,marginBottom:8}}>⚡</div>
-          <div style={{fontSize:28,fontWeight:900,color:C.accent}}>FORGE IDE</div>
-          <div style={{fontSize:11,color:C.muted,letterSpacing:4,marginTop:4}}>AI-POWERED CODE STUDIO</div>
+          <div style={{fontSize:52,marginBottom:8}}>⚡</div>
+          <div style={{fontSize:30,fontWeight:900,background:"linear-gradient(90deg,#7c6dfa,#a855f7)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>FORGE IDE</div>
+          <div style={{fontSize:11,color:"#5050a0",letterSpacing:4,marginTop:4}}>AI-POWERED CODE STUDIO</div>
         </div>
-        <div style={{background:C.panel,border:`1px solid ${C.border}`,padding:24,borderRadius:8}}>
-          <div style={{fontSize:10,color:C.muted,letterSpacing:4,marginBottom:18}}>SIGN IN</div>
+        <div style={{background:"#111128",border:"1px solid #2a2a4a",padding:28,borderRadius:12,boxShadow:"0 20px 60px rgba(0,0,0,0.5)"}}>
+          <div style={{fontSize:10,color:"#4040a0",letterSpacing:4,marginBottom:18}}>SIGN IN</div>
           {[["USERNAME",lu,setLu,"text"],["PASSWORD",lp,setLp,"password"]].map(([label,val,set,type])=>(
             <div key={label} style={{marginBottom:14}}>
-              <div style={{fontSize:10,color:C.muted,marginBottom:5,letterSpacing:2}}>{label}</div>
+              <div style={{fontSize:10,color:"#5050a0",marginBottom:5,letterSpacing:2}}>{label}</div>
               <input value={val} onChange={e=>set(e.target.value)} type={type} onKeyDown={e=>e.key==="Enter"&&login()}
-                style={{width:"100%",boxSizing:"border-box",background:C.bg,border:`1px solid ${C.border}`,color:C.text,padding:"11px 13px",fontFamily:"monospace",fontSize:14,outline:"none",borderRadius:4}}/>
+                style={{width:"100%",boxSizing:"border-box",background:"#0a0a1a",border:"1px solid #2a2a4a",color:"#c8c8e0",padding:"11px 13px",fontFamily:"monospace",fontSize:14,outline:"none",borderRadius:6}}/>
             </div>
           ))}
-          {le&&<div style={{color:C.red,fontSize:12,marginBottom:10}}>{le}</div>}
-          <button onClick={login} style={{width:"100%",background:C.accent,border:"none",color:"#fff",padding:13,fontFamily:"monospace",fontSize:15,fontWeight:900,cursor:"pointer",letterSpacing:2,borderRadius:4}}>
-            LOGIN →
-          </button>
-          <div style={{marginTop:14,padding:10,background:C.accentDim,border:`1px solid ${C.border}`,fontSize:11,color:C.muted,textAlign:"center",lineHeight:1.8,borderRadius:4}}>
-            admin / forge2024
-          </div>
+          {le&&<div style={{color:"#f87171",fontSize:12,marginBottom:10}}>{le}</div>}
+          <button onClick={login} style={{width:"100%",background:"linear-gradient(90deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:13,fontFamily:"monospace",fontSize:15,fontWeight:900,cursor:"pointer",letterSpacing:2,borderRadius:6,marginTop:4}}>LOGIN →</button>
+          <div style={{marginTop:14,padding:10,background:"#7c6dfa15",border:"1px solid #2a2a4a",fontSize:11,color:"#5050a0",textAlign:"center",lineHeight:1.8,borderRadius:6}}>admin / forge2024</div>
         </div>
       </div>
     </div>
   );
 
-  // ── ADMIN ──────────────────────────────────────────────────────
+  // UPGRADE MODAL
+  const UpgradeModal = () => showUpgrade && (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,fontFamily:"monospace"}}>
+      <div style={{background:C.panel,border:`2px solid ${C.accent}`,borderRadius:12,padding:36,maxWidth:380,width:"90%",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:12}}>⚡</div>
+        <div style={{fontSize:22,fontWeight:900,color:C.accent,marginBottom:6}}>You've hit the free limit!</div>
+        <div style={{fontSize:13,color:C.muted,marginBottom:24,lineHeight:1.7}}>You've used all <strong style={{color:C.text}}>{FREE_CREDIT_LIMIT.toLocaleString()} free credits</strong>.<br/>Upgrade to <strong style={{color:C.accent}}>Forge Pro</strong> for unlimited builds.</div>
+        <div style={{background:C.accentDim,border:`1px solid ${C.accent}`,borderRadius:8,padding:"18px 20px",marginBottom:20}}>
+          <div style={{fontSize:32,fontWeight:900,color:C.accent}}>{PRO_PRICE}</div>
+          <div style={{fontSize:11,color:C.muted,letterSpacing:2,marginTop:4}}>PER MONTH</div>
+          <div style={{marginTop:12,display:"flex",flexDirection:"column",gap:6,textAlign:"left"}}>
+            {["✓ Unlimited AI builds","✓ All app types & games","✓ Priority generation","✓ Full history access"].map(f=>(
+              <div key={f} style={{fontSize:12,color:C.text}}>{f}</div>
+            ))}
+          </div>
+        </div>
+        <button style={{width:"100%",background:C.accent,border:"none",color:"#fff",padding:"13px 0",fontFamily:"monospace",fontSize:15,fontWeight:900,cursor:"pointer",borderRadius:6,letterSpacing:2,marginBottom:10}}>UPGRADE TO PRO →</button>
+        <button onClick={()=>setShowUpgrade(false)} style={{width:"100%",background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"10px 0",fontFamily:"monospace",fontSize:12,cursor:"pointer",borderRadius:6}}>Maybe later</button>
+      </div>
+    </div>
+  );
+
+  // HOMEPAGE
+  if(view==="home") return (
+    <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#06061a,#0e0830,#0a0a20)",fontFamily:"monospace",color:"#e0e0ff",display:"flex",flexDirection:"column"}}>
+      <div style={{height:52,display:"flex",alignItems:"center",padding:"0 28px",borderBottom:"1px solid #1a1a3a",background:"rgba(0,0,0,0.3)",flexShrink:0}}>
+        <span style={{fontSize:22}}>⚡</span>
+        <span style={{fontWeight:900,fontSize:16,background:"linear-gradient(90deg,#7c6dfa,#a855f7)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginLeft:8}}>FORGE</span>
+        <div style={{flex:1}}/>
+        {isAdmin&&<span style={{fontSize:9,color:"#4ade80",background:"#0a1a0a",border:"1px solid #4ade80",padding:"3px 8px",borderRadius:3,marginRight:10}}>∞ ADMIN</span>}
+        <button onClick={()=>setView("ide")} style={{background:"#7c6dfa20",border:"1px solid #7c6dfa",color:"#7c6dfa",padding:"6px 16px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:6,marginRight:8}}>Open IDE</button>
+        <button onClick={()=>setView("admin")} style={{background:"transparent",border:"1px solid #2a2a4a",color:"#6060a0",padding:"6px 14px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:6,marginRight:8}}>⚙ Admin</button>
+        <button onClick={()=>setAuthed(false)} style={{background:"transparent",border:"1px solid #2a2a4a",color:"#6060a0",padding:"6px 12px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:6}}>Log out</button>
+      </div>
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 20px",textAlign:"center"}}>
+        <div style={{width:80,height:80,borderRadius:"50%",background:"radial-gradient(circle,#7c6dfa,#a855f7)",boxShadow:"0 0 60px #7c6dfa80, 0 0 120px #a855f740",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,marginBottom:32}}>⚡</div>
+        <h1 style={{fontSize:"clamp(2rem,5vw,3.2rem)",fontWeight:900,lineHeight:1.15,marginBottom:14,letterSpacing:-1}}>
+          <span style={{background:"linear-gradient(90deg,#ffffff,#c8c8ff)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Forge is your</span>
+          <br/>
+          <span style={{background:"linear-gradient(90deg,#7c6dfa,#a855f7,#ec4899)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>co-AI assistant</span>
+        </h1>
+        <p style={{fontSize:"clamp(0.9rem,2vw,1.1rem)",color:"#7070b0",maxWidth:500,lineHeight:1.8,marginBottom:40}}>
+          Start typing your prompt and watch your idea<br/>come to life — games, apps, tools, built in seconds.
+        </p>
+        <div style={{width:"100%",maxWidth:620,background:"#0d0d24",border:"2px solid #3a2a6a",borderRadius:16,padding:4,boxShadow:"0 0 40px #7c6dfa30",marginBottom:20}}>
+          <div style={{display:"flex",alignItems:"flex-end",gap:8,padding:"10px 10px 10px 18px"}}>
+            <textarea value={homeInput} onChange={e=>setHomeInput(e.target.value)} onKeyDown={handleHomeKey}
+              placeholder={typed.length ? typed : "What do you want to build?"} rows={2}
+              style={{flex:1,background:"transparent",border:"none",outline:"none",color:"#e0e0ff",fontFamily:"monospace",fontSize:15,resize:"none",lineHeight:1.5,padding:"4px 0"}}/>
+            <button onClick={()=>startBuilding(homeInput)}
+              style={{background:homeInput.trim()?"linear-gradient(90deg,#7c6dfa,#a855f7)":"#1a1a3a",border:"none",color:homeInput.trim()?"#fff":"#3a3a6a",padding:"12px 22px",fontFamily:"monospace",fontSize:13,fontWeight:900,cursor:homeInput.trim()?"pointer":"default",borderRadius:10,flexShrink:0,transition:"all 0.2s",letterSpacing:1}}>
+              BUILD ⚡
+            </button>
+          </div>
+        </div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8,justifyContent:"center",maxWidth:580,marginBottom:48}}>
+          {EXAMPLES.map(p=>(
+            <button key={p} onClick={()=>startBuilding(p)}
+              style={{background:"#0d0d24",border:"1px solid #2a2a4a",color:"#7070b0",padding:"6px 14px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:20,transition:"all 0.15s"}}>
+              {p}
+            </button>
+          ))}
+        </div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center"}}>
+          {[["⚡","Instant builds"],["🎮","Full games"],["🎨","Beautiful UI"],["🔄","Live preview"],["🤖","Claude Sonnet 4"]].map(([icon,label])=>(
+            <div key={label} style={{display:"flex",alignItems:"center",gap:6,background:"#0d0d24",border:"1px solid #1a1a3a",padding:"8px 16px",borderRadius:20,fontSize:12,color:"#5050a0"}}>
+              <span>{icon}</span><span>{label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <style>{`textarea::placeholder{color:#3a3a6a} button:hover{opacity:0.85}`}</style>
+    </div>
+  );
+
+  // ADMIN
   if(view==="admin") return (
     <div style={{height:"100vh",background:C.bg,fontFamily:"monospace",color:C.text,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-      <div style={{height:48,background:C.sidebar,borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",padding:"0 18px",gap:14,flexShrink:0}}>
-        <span style={{color:C.accent,fontWeight:900,fontSize:17}}>⚡ FORGE ADMIN</span>
+      <div style={{height:48,background:C.sidebar,borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",padding:"0 18px",gap:12,flexShrink:0}}>
+        <span style={{color:C.accent,fontWeight:900,fontSize:16}}>⚡ FORGE ADMIN</span>
         <div style={{flex:1}}/>
-        <button onClick={()=>setView("ide")} style={{background:C.accentDim,border:`1px solid ${C.accent}`,color:C.accent,padding:"6px 14px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:3}}>← IDE</button>
-        <button onClick={()=>setAuthed(false)} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"6px 12px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:3}}>LOG OUT</button>
+        <button onClick={()=>setView("home")} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"5px 12px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:4}}>🏠 Home</button>
+        <button onClick={()=>setView("ide")} style={{background:C.accentDim,border:`1px solid ${C.accent}`,color:C.accent,padding:"5px 14px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:4}}>← IDE</button>
+        <button onClick={()=>setAuthed(false)} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"5px 10px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:4}}>LOG OUT</button>
       </div>
       <div style={{flex:1,display:"flex",overflow:"hidden"}}>
         <div style={{width:200,background:C.sidebar,borderRight:`1px solid ${C.border}`,padding:"14px 10px",flexShrink:0}}>
-          {[{id:"dashboard",label:"📊 Dashboard"},{id:"claude",label:"🤖 Claude AI",badge:true},{id:"history",label:"📋 History"},{id:"settings",label:"⚙️ Settings"}].map(t=>(
-            <div key={t.id} onClick={()=>setAdminTab(t.id)} style={{padding:"9px 12px",marginBottom:4,cursor:"pointer",borderRadius:4,background:adminTab===t.id?(t.id==="claude"?"#0d1a0d":C.accentDim):"transparent",border:`1px solid ${adminTab===t.id?(t.id==="claude"?C.green:C.accent):"transparent"}`,color:adminTab===t.id?(t.id==="claude"?C.green:C.accent):C.muted,fontSize:12,display:"flex",alignItems:"center",gap:8}}>
+          {[{id:"dashboard",label:"📊 Dashboard"},{id:"claude",label:"🤖 Live AI",badge:true},{id:"history",label:"📋 History"},{id:"settings",label:"⚙️ Settings"}].map(t=>(
+            <div key={t.id} onClick={()=>setAdminTab(t.id)} style={{padding:"9px 12px",marginBottom:4,cursor:"pointer",borderRadius:4,background:adminTab===t.id?C.accentDim:"transparent",border:`1px solid ${adminTab===t.id?C.accent:"transparent"}`,color:adminTab===t.id?C.accent:C.muted,fontSize:12,display:"flex",alignItems:"center",gap:8}}>
               {t.label}
               {t.badge&&<span style={{marginLeft:"auto",width:7,height:7,borderRadius:"50%",background:C.green,boxShadow:`0 0 4px ${C.green}`}}/>}
             </div>
           ))}
+          <div style={{marginTop:16,padding:"10px 12px",background:C.accentDim,border:`1px solid ${C.accent}`,borderRadius:6,fontSize:10,color:C.accent}}>
+            <div style={{fontWeight:900,marginBottom:6}}>AI CAN CHANGE:</div>
+            <div style={{color:C.muted,lineHeight:1.8}}>• Theme colours<br/>• Dark / light mode<br/>• Accent colour<br/>• Background<br/>• Text colours</div>
+          </div>
         </div>
         <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>
-
           {adminTab==="dashboard"&&(
             <div style={{flex:1,overflowY:"auto",padding:"22px 26px"}}>
               <div style={{fontSize:20,fontWeight:900,color:C.accent,marginBottom:20}}>Dashboard</div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:12,marginBottom:24}}>
                 {[["⚡","API Calls",calls],["🧠","Tokens",tokens.toLocaleString()],["🔨","Builds",history.length]].map(([icon,label,val])=>(
-                  <div key={label} style={{background:C.panel,border:`1px solid ${C.border}`,padding:"18px 16px",borderRadius:6}}>
+                  <div key={label} style={{background:C.panel,border:`1px solid ${C.border}`,padding:"18px 16px",borderRadius:8}}>
                     <div style={{fontSize:26,marginBottom:8}}>{icon}</div>
                     <div style={{fontSize:26,fontWeight:900,color:C.accent}}>{val}</div>
                     <div style={{fontSize:10,color:C.muted,letterSpacing:2,marginTop:4}}>{label.toUpperCase()}</div>
                   </div>
                 ))}
               </div>
-              <div style={{background:C.panel,border:`1px solid ${C.border}`,padding:20,borderRadius:6}}>
-                <div style={{fontSize:11,color:C.muted,letterSpacing:3,marginBottom:14}}>RECENT BUILDS</div>
+              <div style={{background:C.panel,border:`1px solid ${C.border}`,padding:20,borderRadius:8,marginBottom:16}}>
+                <div style={{fontSize:11,color:C.muted,letterSpacing:3,marginBottom:12}}>LIVE THEME COLOURS</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                  {Object.entries(C).filter(([k])=>!k.includes("Dim")).map(([k,v])=>(
+                    <div key={k} style={{display:"flex",alignItems:"center",gap:6,background:C.bg,border:`1px solid ${C.border}`,padding:"4px 10px",borderRadius:4,fontSize:10}}>
+                      <div style={{width:12,height:12,borderRadius:2,background:v,border:`1px solid ${C.border}`}}/>
+                      <span style={{color:C.muted}}>{k}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{background:C.panel,border:`1px solid ${C.border}`,padding:20,borderRadius:8}}>
+                <div style={{fontSize:11,color:C.muted,letterSpacing:3,marginBottom:12}}>RECENT BUILDS</div>
                 {history.slice(0,8).map(h=>(
                   <div key={h.id} style={{padding:"8px 0",borderBottom:`1px solid ${C.border}`,fontSize:12,display:"flex",justifyContent:"space-between"}}>
                     <span style={{color:C.accent,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{h.prompt}</span>
@@ -232,132 +337,103 @@ export default function App() {
               </div>
             </div>
           )}
-
           {adminTab==="claude"&&(
-            <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:"#080e08"}}>
-              <div style={{background:"#080e08",borderBottom:"1px solid #1a2a1a",padding:"12px 20px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
-                <div style={{width:9,height:9,borderRadius:"50%",background:C.green,boxShadow:`0 0 6px ${C.green}`}}/>
-                <div>
-                  <div style={{fontSize:13,fontWeight:700,color:C.green}}>Claude Sonnet 4 — Admin AI</div>
-                  <div style={{fontSize:10,color:"#2a5a2a"}}>PRIVATE · ADMIN ONLY</div>
+            <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:C.chatBg}}>
+              <div style={{background:C.sidebar,borderBottom:`1px solid ${C.border}`,padding:"12px 20px",flexShrink:0}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                  <div style={{width:9,height:9,borderRadius:"50%",background:C.green,boxShadow:`0 0 6px ${C.green}`}}/>
+                  <div style={{fontWeight:700,color:C.green,fontSize:13}}>Claude Sonnet 4 — Live Admin AI</div>
+                </div>
+                <div style={{fontSize:11,color:C.muted,marginBottom:8}}>Ask me to change any colour or theme — it updates the whole IDE instantly!</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                  {AQUICK.map(q=>(
+                    <button key={q} onClick={()=>{setAdminInput(q);adminRef.current?.focus();}}
+                      style={{background:C.panel,border:`1px solid ${C.border}`,color:C.muted,padding:"4px 10px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:4}}>
+                      {q}
+                    </button>
+                  ))}
                 </div>
               </div>
               <div style={{flex:1,overflowY:"auto",padding:"14px 20px",display:"flex",flexDirection:"column",gap:10}}>
                 {adminMsgs.map((msg,i)=>(
                   <div key={i} style={{display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start"}}>
-                    {msg.role==="assistant"&&<div style={{fontSize:9,color:"#1a4a1a",letterSpacing:2,marginBottom:3}}>CLAUDE SONNET 4</div>}
-                    <div style={{maxWidth:"85%",background:msg.role==="user"?"#0d2a0d":"#0a1a0a",border:`1px solid ${msg.role==="user"?C.green+"50":"#1a3a1a"}`,padding:"10px 14px",fontSize:13,lineHeight:1.7,color:msg.role==="user"?C.green:"#8aaa8a",whiteSpace:"pre-wrap",wordBreak:"break-word",borderRadius:6}}>
+                    {msg.role==="assistant"&&<div style={{fontSize:9,color:C.muted,letterSpacing:2,marginBottom:3}}>CLAUDE AI</div>}
+                    <div style={{maxWidth:"85%",background:msg.role==="user"?C.accent:C.panel,border:`1px solid ${msg.role==="user"?C.accent:C.border}`,padding:"10px 14px",fontSize:13,lineHeight:1.7,color:msg.role==="user"?"#fff":C.text,whiteSpace:"pre-wrap",wordBreak:"break-word",borderRadius:8}}>
                       {msg.content}
                     </div>
                   </div>
                 ))}
                 {adminLoading&&(
                   <div style={{alignSelf:"flex-start"}}>
-                    <div style={{fontSize:9,color:"#1a4a1a",letterSpacing:2,marginBottom:3}}>CLAUDE SONNET 4</div>
-                    <div style={{background:"#0a1a0a",border:"1px solid #1a3a1a",padding:"10px 16px",display:"flex",gap:5,alignItems:"center",borderRadius:6}}>
-                      {[0,1,2].map(d=><div key={d} style={{width:6,height:6,borderRadius:"50%",background:C.green,animation:`bounce 1s ${d*0.2}s infinite`}}/>)}
-                      <span style={{fontSize:11,color:"#2a5a2a",marginLeft:8}}>Thinking...</span>
+                    <div style={{background:C.panel,border:`1px solid ${C.border}`,padding:"10px 16px",display:"flex",gap:5,alignItems:"center",borderRadius:8}}>
+                      {[0,1,2].map(d=><div key={d} style={{width:6,height:6,borderRadius:"50%",background:C.accent,animation:`bounce 1s ${d*0.2}s infinite`}}/>)}
+                      <span style={{fontSize:11,color:C.muted,marginLeft:8}}>Applying changes...</span>
                     </div>
                   </div>
                 )}
                 <div ref={adminEnd}/>
               </div>
-              <div style={{background:"#080e08",padding:"6px 20px 0",borderTop:"1px solid #0f1f0f"}}>
-                <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:8}}>
-                  {AQUICK.map(p=>(
-                    <button key={p} onClick={()=>{setAdminInput(p);adminRef.current?.focus();}}
-                      style={{background:"transparent",border:"1px solid #1a3a1a",color:"#2a5a2a",padding:"3px 9px",fontFamily:"monospace",fontSize:9,cursor:"pointer",borderRadius:3}}>{p}</button>
-                  ))}
-                </div>
-              </div>
-              <div style={{padding:"10px 20px 16px",background:"#080e08",flexShrink:0}}>
-                <div style={{background:"#0a150a",border:`2px solid ${adminInput.trim()?C.green:"#1a3a1a"}`,borderRadius:6}}>
+              <div style={{padding:"10px 20px 16px",background:C.sidebar,borderTop:`1px solid ${C.border}`,flexShrink:0}}>
+                <div style={{background:C.inputBg,border:`2px solid ${adminInput.trim()?C.accent:C.border}`,borderRadius:8}}>
                   <textarea ref={adminRef} value={adminInput} onChange={e=>setAdminInput(e.target.value)} onKeyDown={handleAdminKey}
-                    placeholder="Ask Claude anything..." rows={3}
-                    style={{width:"100%",boxSizing:"border-box",background:"transparent",border:"none",outline:"none",color:C.green,fontFamily:"monospace",fontSize:13,padding:"10px 13px 6px",resize:"none",lineHeight:1.5,display:"block"}}/>
-                  <div style={{display:"flex",alignItems:"center",padding:"7px 10px",borderTop:"1px solid #1a3a1a",gap:10}}>
-                    <span style={{fontSize:9,color:"#1a3a1a",flex:1}}>⏎ send</span>
+                    placeholder="e.g. Change theme to dark purple..." rows={2}
+                    style={{width:"100%",boxSizing:"border-box",background:"transparent",border:"none",outline:"none",color:C.text,fontFamily:"monospace",fontSize:13,padding:"10px 13px 6px",resize:"none",lineHeight:1.5,display:"block"}}/>
+                  <div style={{display:"flex",alignItems:"center",padding:"6px 10px",borderTop:`1px solid ${C.border}`,gap:8}}>
+                    <span style={{fontSize:9,color:C.muted,flex:1}}>⏎ send</span>
                     <button onClick={sendAdmin} disabled={adminLoading||!adminInput.trim()}
-                      style={{background:adminInput.trim()&&!adminLoading?C.green:"#0a150a",border:`2px solid ${adminInput.trim()&&!adminLoading?C.green:"#1a3a1a"}`,color:adminInput.trim()&&!adminLoading?"#000":"#1a4a1a",padding:"9px 20px",fontFamily:"monospace",fontSize:13,fontWeight:900,cursor:adminLoading||!adminInput.trim()?"not-allowed":"pointer",letterSpacing:1,display:"flex",alignItems:"center",gap:6,minWidth:120,justifyContent:"center",borderRadius:3}}>
-                      {adminLoading?<><span>⏳</span>THINKING</>:<><span>🤖</span>ASK CLAUDE</>}
+                      style={{background:adminInput.trim()&&!adminLoading?C.accent:C.panel,border:`1px solid ${adminInput.trim()&&!adminLoading?C.accent:C.border}`,color:adminInput.trim()&&!adminLoading?"#fff":C.muted,padding:"8px 18px",fontFamily:"monospace",fontSize:12,fontWeight:900,cursor:adminLoading||!adminInput.trim()?"not-allowed":"pointer",borderRadius:6,letterSpacing:1}}>
+                      {adminLoading?"THINKING...":"APPLY →"}
                     </button>
                   </div>
                 </div>
               </div>
             </div>
           )}
-
           {adminTab==="history"&&(
             <div style={{flex:1,overflowY:"auto",padding:"22px 26px"}}>
               <div style={{fontSize:20,fontWeight:900,color:C.accent,marginBottom:20}}>Build History</div>
               {history.length===0&&<div style={{color:C.muted}}>No builds yet!</div>}
               {history.map(h=>(
-                <div key={h.id} style={{background:C.panel,border:`1px solid ${C.border}`,padding:"12px 16px",marginBottom:6,borderRadius:6,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div key={h.id} style={{background:C.panel,border:`1px solid ${C.border}`,padding:"12px 16px",marginBottom:6,borderRadius:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <span style={{color:C.accent,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{h.prompt}</span>
                   <span style={{color:C.muted,fontSize:11,marginLeft:10,flexShrink:0}}>{h.time}</span>
                 </div>
               ))}
             </div>
           )}
-
           {adminTab==="settings"&&(
             <div style={{flex:1,overflowY:"auto",padding:"22px 26px"}}>
               <div style={{fontSize:20,fontWeight:900,color:C.accent,marginBottom:20}}>Settings</div>
-              <div style={{background:C.panel,border:`1px solid ${C.border}`,padding:20,borderRadius:6}}>
-                {[["Model",MODEL],["Admin User",ADMIN_USER],["API Route","/api/chat"],["Version","Forge v4"]].map(([k,v])=>(
+              <div style={{background:C.panel,border:`1px solid ${C.border}`,padding:20,borderRadius:8,marginBottom:16}}>
+                {[["Model",MODEL],["Admin User",ADMIN_USER],["API Route","/api/chat"],["Version","Forge v6"]].map(([k,v])=>(
                   <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:`1px solid ${C.border}`}}>
                     <span style={{fontSize:13,color:C.muted}}>{k}</span>
                     <span style={{fontSize:13,color:C.accent}}>{v}</span>
                   </div>
                 ))}
               </div>
+              <div style={{background:C.panel,border:`1px solid ${C.border}`,padding:20,borderRadius:8}}>
+                <div style={{fontSize:11,color:C.muted,letterSpacing:3,marginBottom:12}}>RESET THEME</div>
+                <button onClick={()=>setC(DEFAULT_THEME)} style={{background:C.accent,border:"none",color:"#fff",padding:"10px 20px",fontFamily:"monospace",fontSize:12,cursor:"pointer",borderRadius:6,fontWeight:900}}>Reset to Default</button>
+              </div>
             </div>
           )}
-
         </div>
       </div>
+      <style>{`@keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:0.4}40%{transform:translateY(-5px);opacity:1}}`}</style>
     </div>
   );
 
-  // ── UPGRADE MODAL ──────────────────────────────────────────────
-  const UpgradeModal = () => showUpgrade && (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,fontFamily:"monospace"}}>
-      <div style={{background:C.panel,border:`1px solid ${C.accent}`,borderRadius:10,padding:36,maxWidth:380,width:"90%",textAlign:"center"}}>
-        <div style={{fontSize:40,marginBottom:12}}>⚡</div>
-        <div style={{fontSize:22,fontWeight:900,color:C.accent,marginBottom:6}}>You've hit the free limit!</div>
-        <div style={{fontSize:13,color:C.muted,marginBottom:24,lineHeight:1.7}}>
-          You've used all <strong style={{color:C.text}}>{FREE_CREDIT_LIMIT.toLocaleString()} free credits</strong>.<br/>
-          Upgrade to <strong style={{color:C.accent}}>Forge Pro</strong> for unlimited builds.
-        </div>
-        <div style={{background:C.accentDim,border:`1px solid ${C.accent}`,borderRadius:8,padding:"18px 20px",marginBottom:20}}>
-          <div style={{fontSize:32,fontWeight:900,color:C.accent}}>{PRO_PRICE}</div>
-          <div style={{fontSize:11,color:C.muted,letterSpacing:2,marginTop:4}}>PER MONTH</div>
-          <div style={{marginTop:12,display:"flex",flexDirection:"column",gap:6,textAlign:"left"}}>
-            {["✓ Unlimited AI builds","✓ All app types & games","✓ Priority generation","✓ Full history access"].map(f=>(
-              <div key={f} style={{fontSize:12,color:C.text}}>{f}</div>
-            ))}
-          </div>
-        </div>
-        <button style={{width:"100%",background:C.accent,border:"none",color:"#fff",padding:"13px 0",fontFamily:"monospace",fontSize:15,fontWeight:900,cursor:"pointer",borderRadius:6,letterSpacing:2,marginBottom:10}}>
-          UPGRADE TO PRO →
-        </button>
-        <button onClick={()=>setShowUpgrade(false)} style={{width:"100%",background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"10px 0",fontFamily:"monospace",fontSize:12,cursor:"pointer",borderRadius:6}}>
-          Maybe later
-        </button>
-      </div>
-    </div>
-  );
-
-  // ── MAIN IDE — LEFT/RIGHT LAYOUT ───────────────────────────────
+  // MAIN IDE
   return (
     <div style={{height:"100vh",background:C.bg,fontFamily:"monospace",color:C.text,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-      <UpgradeModal />
-
-      {/* TOP BAR */}
+      <UpgradeModal/>
       <div style={{height:44,background:C.sidebar,borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",padding:"0 14px",gap:10,flexShrink:0}}>
-        <span style={{fontSize:20}}>⚡</span>
-        <span style={{fontWeight:900,fontSize:16,color:C.accent}}>FORGE IDE</span>
-        <div style={{width:6,height:6,borderRadius:"50%",background:C.green,boxShadow:`0 0 4px ${C.green}`,marginLeft:4}}/>
+        <button onClick={()=>setView("home")} style={{background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:6,padding:0}}>
+          <span style={{fontSize:20}}>⚡</span>
+          <span style={{fontWeight:900,fontSize:16,color:C.accent}}>FORGE</span>
+        </button>
+        <div style={{width:6,height:6,borderRadius:"50%",background:C.green,boxShadow:`0 0 4px ${C.green}`,marginLeft:2}}/>
         <span style={{fontSize:10,color:C.muted}}>AI READY</span>
         <div style={{flex:1}}/>
         {history.length>0&&<span style={{fontSize:10,color:C.muted}}>Last: {history[0]?.prompt?.slice(0,20)}...</span>}
@@ -369,64 +445,38 @@ export default function App() {
             <span style={{fontSize:9,color:tokens>=FREE_CREDIT_LIMIT?C.red:C.muted}}>{tokens.toLocaleString()}/{FREE_CREDIT_LIMIT.toLocaleString()}</span>
           </div>
         )}
-        {isAdmin&&<span style={{fontSize:9,color:C.green,background:"#f0fff0",border:`1px solid ${C.green}`,padding:"3px 8px",borderRadius:3}}>∞ ADMIN</span>}
+        {isAdmin&&<span style={{fontSize:9,color:C.green,background:C.chatBg,border:`1px solid ${C.green}`,padding:"3px 8px",borderRadius:3}}>∞ ADMIN</span>}
         <button onClick={()=>setView("admin")} style={{background:C.accentDim,border:`1px solid ${C.accent}`,color:C.accent,padding:"5px 14px",fontFamily:"monospace",fontSize:10,cursor:"pointer",fontWeight:700,borderRadius:3}}>⚙ ADMIN</button>
         <button onClick={()=>setAuthed(false)} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"5px 10px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:3}}>LOG OUT</button>
       </div>
-
-      {/* MAIN BODY — side by side */}
       <div style={{flex:1,display:"flex",overflow:"hidden",minHeight:0}}>
-
-        {/* LEFT — PREVIEW 60% */}
         <div style={{width:"60%",display:"flex",flexDirection:"column",borderRight:`1px solid ${C.border}`}}>
           <div style={{height:32,background:C.panel,borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",padding:"0 14px",gap:8,flexShrink:0}}>
-            <div style={{display:"flex",gap:5}}>
-              {["#ff5f57","#ffbd2e","#28c840"].map(c=><div key={c} style={{width:9,height:9,borderRadius:"50%",background:c}}/>)}
-            </div>
+            <div style={{display:"flex",gap:5}}>{["#ff5f57","#ffbd2e","#28c840"].map(c=><div key={c} style={{width:9,height:9,borderRadius:"50%",background:c}}/>)}</div>
             <span style={{fontSize:10,color:C.muted,marginLeft:4,letterSpacing:2}}>LIVE PREVIEW</span>
             {loading&&<span style={{fontSize:10,color:C.accent,marginLeft:"auto"}}>⚡ Building...</span>}
           </div>
-          <iframe
-            key={previewKey}
-            srcDoc={previewHtml}
-            style={{flex:1,border:"none",background:"#fff"}}
-            sandbox="allow-scripts allow-forms allow-modals"
-            title="preview"
-          />
+          <iframe key={previewKey} srcDoc={previewHtml} style={{flex:1,border:"none",background:"#fff"}} sandbox="allow-scripts allow-forms allow-modals" title="preview"/>
         </div>
-
-        {/* RIGHT — CHAT PANEL 40% */}
         <div style={{width:"40%",display:"flex",flexDirection:"column",overflow:"hidden",background:C.chatBg}}>
-
-          {/* Quick prompts */}
           <div style={{padding:"8px 12px",borderBottom:`1px solid ${C.border}`,background:C.sidebar,display:"flex",flexWrap:"wrap",gap:4,flexShrink:0}}>
             {QUICK.map(p=>(
               <button key={p} onClick={()=>{setInput(`Build a ${p}`);setTimeout(()=>inputRef.current?.focus(),50);}}
-                style={{background:"#fff",border:`1px solid ${C.border}`,color:C.muted,padding:"3px 10px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:3}}>
-                {p}
-              </button>
+                style={{background:C.inputBg,border:`1px solid ${C.border}`,color:C.muted,padding:"3px 10px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:3}}>{p}</button>
             ))}
           </div>
-
-          {/* Messages */}
           <div style={{flex:1,overflowY:"auto",padding:"10px 12px",display:"flex",flexDirection:"column",gap:8,minHeight:0}}>
             {msgs.map((msg,i)=>(
               <div key={i} style={{display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start"}}>
-                <div style={{maxWidth:"85%",background:msg.role==="user"?C.accent:C.panel,border:`1px solid ${msg.role==="user"?C.accent:C.border}`,padding:"8px 12px",fontSize:13,lineHeight:1.55,color:msg.role==="user"?"#fff":C.text,borderRadius:6}}>
-                  <span style={{whiteSpace:"pre-wrap"}}>
-                    {msg.content.replace(/```[\s\S]*?```/g,"").replace(/\*\*(.*?)\*\*/g,"$1").trim()}
-                  </span>
-                  {msg.hasCode&&(
-                    <div style={{marginTop:6,padding:"4px 8px",background:"#f0fff4",border:`1px solid ${C.green}`,color:"#166534",fontSize:11,borderRadius:3}}>
-                      ✓ Preview updated — look left!
-                    </div>
-                  )}
+                <div style={{maxWidth:"85%",background:msg.role==="user"?C.accent:C.panel,border:`1px solid ${msg.role==="user"?C.accent:C.border}`,padding:"8px 12px",fontSize:13,lineHeight:1.55,color:msg.role==="user"?"#fff":C.text,borderRadius:8}}>
+                  <span style={{whiteSpace:"pre-wrap"}}>{msg.content.replace(/```[\s\S]*?```/g,"").replace(/\*\*(.*?)\*\*/g,"$1").trim()}</span>
+                  {msg.hasCode&&<div style={{marginTop:6,padding:"4px 8px",background:C.chatBg,border:`1px solid ${C.green}`,color:C.green,fontSize:11,borderRadius:3}}>✓ Preview updated — look left!</div>}
                 </div>
               </div>
             ))}
             {loading&&(
               <div style={{alignSelf:"flex-start"}}>
-                <div style={{background:C.panel,border:`1px solid ${C.border}`,padding:"10px 14px",display:"flex",gap:5,alignItems:"center",borderRadius:6}}>
+                <div style={{background:C.panel,border:`1px solid ${C.border}`,padding:"10px 14px",display:"flex",gap:5,alignItems:"center",borderRadius:8}}>
                   {[0,1,2].map(d=><div key={d} style={{width:5,height:5,borderRadius:"50%",background:C.accent,animation:`bounce 1s ${d*0.2}s infinite`}}/>)}
                   <span style={{fontSize:11,color:C.muted,marginLeft:6}}>Building...</span>
                 </div>
@@ -434,48 +484,27 @@ export default function App() {
             )}
             <div ref={chatEnd}/>
           </div>
-
-          {/* Input */}
           <div style={{padding:"8px 12px 10px",borderTop:`1px solid ${C.border}`,background:C.sidebar,flexShrink:0}}>
             <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
-              <div style={{flex:1,background:"#ffffff",border:`2px solid ${input.trim()?C.accent:C.border}`,borderRadius:6,transition:"border-color 0.2s"}}>
-                <textarea
-                  ref={inputRef}
-                  value={input}
-                  onChange={e=>setInput(e.target.value)}
-                  onKeyDown={handleKey}
-                  placeholder="Describe what to build..."
-                  rows={2}
-                  style={{width:"100%",boxSizing:"border-box",background:"transparent",border:"none",outline:"none",color:C.text,fontFamily:"monospace",fontSize:13,padding:"10px 12px",resize:"none",lineHeight:1.5,display:"block"}}
-                />
+              <div style={{flex:1,background:C.inputBg,border:`2px solid ${input.trim()?C.accent:C.border}`,borderRadius:8,transition:"border-color 0.2s"}}>
+                <textarea ref={inputRef} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={handleKey}
+                  placeholder="Describe what to build..." rows={2}
+                  style={{width:"100%",boxSizing:"border-box",background:"transparent",border:"none",outline:"none",color:C.text,fontFamily:"monospace",fontSize:13,padding:"10px 12px",resize:"none",lineHeight:1.5,display:"block"}}/>
               </div>
-              <button
-                onClick={send}
-                disabled={loading||!input.trim()}
-                style={{
-                  background:input.trim()&&!loading?C.accent:"#c8d8f8",
-                  border:`2px solid ${input.trim()&&!loading?C.accent:C.border}`,
-                  color:input.trim()&&!loading?"#fff":C.muted,
-                  padding:"10px 20px",fontFamily:"monospace",fontSize:14,fontWeight:900,
-                  cursor:loading||!input.trim()?"not-allowed":"pointer",
-                  letterSpacing:1,display:"flex",alignItems:"center",gap:6,
-                  borderRadius:6,transition:"all 0.15s",flexShrink:0,height:58,
-                }}
-              >
-                {loading?<><span style={{fontSize:18}}>⏳</span></>:<><span style={{fontSize:18}}>⚡</span>SEND</>}
+              <button onClick={send} disabled={loading||!input.trim()}
+                style={{background:input.trim()&&!loading?C.accent:C.panel,border:`2px solid ${input.trim()&&!loading?C.accent:C.border}`,color:input.trim()&&!loading?"#fff":C.muted,padding:"10px 20px",fontFamily:"monospace",fontSize:14,fontWeight:900,cursor:loading||!input.trim()?"not-allowed":"pointer",letterSpacing:1,display:"flex",alignItems:"center",gap:6,borderRadius:8,transition:"all 0.15s",flexShrink:0,height:58}}>
+                {loading?<span style={{fontSize:18}}>⏳</span>:<><span style={{fontSize:18}}>⚡</span>SEND</>}
               </button>
             </div>
           </div>
-
         </div>
       </div>
-
       <style>{`
         @keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:0.4}40%{transform:translateY(-5px);opacity:1}}
         *{scrollbar-width:thin;scrollbar-color:${C.border} transparent}
         ::-webkit-scrollbar{width:4px;height:4px}
         ::-webkit-scrollbar-thumb{background:${C.border};border-radius:2px}
-        textarea::placeholder{color:#90a8c8}
+        textarea::placeholder{color:${C.muted}80}
         button:hover:not(:disabled){opacity:0.85}
       `}</style>
     </div>
