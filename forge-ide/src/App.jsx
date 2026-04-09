@@ -122,8 +122,10 @@ export default function App() {
 
   const callAPI = async (system, messages) => {
     const r = await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:MODEL,max_tokens:4096,system,messages})});
-    if(!r.ok) throw new Error(`API error ${r.status}`);
-    return r.json();
+    const data = await r.json();
+    if(!r.ok) throw new Error(data.error || `API error ${r.status}`);
+    if(!data.content) throw new Error("Empty response from API");
+    return data;
   };
 
   // Simulate live build steps while waiting
@@ -198,7 +200,7 @@ export default function App() {
     setAdminInput("");
     setAdminMsgs(m=>[...m,{role:"user",content:p}]);
     setAdminLoading(true);
-    const ADMIN_SYS = `You are Claude, the live admin AI for Forge IDE. You can change the app theme in real time.
+    const ADMIN_SYS = `You are Claude Sonnet 4.6, the live admin AI for Forge IDE. You can change the app theme in real time.
 CURRENT THEME: ${JSON.stringify(C)}
 STATS: Calls:${calls} Tokens:${tokens} Builds:${history.length}
 If user asks to change theme/colours, respond with a short message AND this exact JSON block:
@@ -369,7 +371,7 @@ Be concise and friendly.`;
           <span style={{background:"linear-gradient(90deg,#7c6dfa,#a855f7,#ec4899)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>co-AI assistant</span>
         </h1>
         <p style={{fontSize:"clamp(0.9rem,2vw,1.1rem)",color:"#7070b0",maxWidth:500,lineHeight:1.8,marginBottom:40}}>
-          Start typing your prompt and watch your idea come to life —<br/>games, apps, tools, built in seconds.
+          Powered by <strong>Claude Sonnet 4.6</strong> — start typing and watch your idea come to life.<br/>Games, apps, tools, built in seconds.<br/><span style={{fontSize:"0.8em",color:"#5050a0"}}>Powered by Claude Sonnet 4.6</span>
         </p>
         <div style={{width:"100%",maxWidth:620,background:"#0d0d24",border:"2px solid #3a2a6a",borderRadius:16,padding:4,boxShadow:"0 0 40px #7c6dfa30",marginBottom:20}}>
           <div style={{display:"flex",alignItems:"flex-end",gap:8,padding:"10px 10px 10px 18px"}}>
@@ -390,7 +392,7 @@ Be concise and friendly.`;
           ))}
         </div>
         <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center"}}>
-          {[["⚡","Instant builds"],["🎮","Full games"],["🎨","Beautiful UI"],["🔄","Live preview"],["🤖","Claude Sonnet 4"]].map(([icon,label])=>(
+          {[["⚡","Instant builds"],["🎮","Full games"],["🎨","Beautiful UI"],["🔄","Live preview"],["🤖","Claude Sonnet 4.6"]].map(([icon,label])=>(
             <div key={label} style={{display:"flex",alignItems:"center",gap:6,background:"#0d0d24",border:"1px solid #1a1a3a",padding:"8px 16px",borderRadius:20,fontSize:12,color:"#5050a0"}}>
               <span>{icon}</span><span>{label}</span>
             </div>
@@ -459,7 +461,7 @@ Be concise and friendly.`;
               <div style={{background:C.sidebar,borderBottom:`1px solid ${C.border}`,padding:"12px 20px",flexShrink:0}}>
                 <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
                   <div style={{width:9,height:9,borderRadius:"50%",background:C.green,boxShadow:`0 0 6px ${C.green}`}}/>
-                  <div style={{fontWeight:700,color:C.green,fontSize:13}}>Claude Sonnet 4 — Live Admin AI</div>
+                  <div style={{fontWeight:700,color:C.green,fontSize:13}}>Claude Sonnet 4.6 — Live Admin AI</div>
                 </div>
                 <div style={{fontSize:11,color:C.muted,marginBottom:8}}>Ask me to change any colour or theme — it updates instantly!</div>
                 <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
@@ -520,7 +522,7 @@ Be concise and friendly.`;
             <div style={{flex:1,overflowY:"auto",padding:"22px 26px"}}>
               <div style={{fontSize:20,fontWeight:900,color:C.accent,marginBottom:20}}>Settings</div>
               <div style={{background:C.panel,border:`1px solid ${C.border}`,padding:20,borderRadius:8,marginBottom:16}}>
-                {[["Model",MODEL],["Admin User",ADMIN_USER],["API Route","/api/chat"],["Version","Forge v8"]].map(([k,v])=>(
+                {[["Model",MODEL],["Admin User",ADMIN_USER],["API Route","/api/chat"],["Version","Forge v13"]].map(([k,v])=>(
                   <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:`1px solid ${C.border}`}}>
                     <span style={{fontSize:13,color:C.muted}}>{k}</span>
                     <span style={{fontSize:13,color:C.accent}}>{v}</span>
