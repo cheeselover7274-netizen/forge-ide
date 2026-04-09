@@ -1,8 +1,5 @@
 // api/chat.js — Vercel Serverless Function
-// Your ANTHROPIC_API_KEY lives only here, never in the browser.
-
 export default async function handler(req, res) {
-  // Only allow POST
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -13,7 +10,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { model, max_tokens, system, messages } = req.body;
+    const { model, system, messages } = req.body;
+    // Force 4096 tokens so full HTML apps never get cut off
+    const max_tokens = 4096;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
