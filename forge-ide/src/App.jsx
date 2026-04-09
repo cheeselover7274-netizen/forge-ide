@@ -103,7 +103,6 @@ export default function App() {
 
   const chatEnd = useRef(null);
   const iframeRef = useRef(null);
-  const iframeRef = useRef(null);
 
 
   const adminEnd = useRef(null);
