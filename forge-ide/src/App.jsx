@@ -31,7 +31,9 @@ ALWAYS use EXACTLY this format for the code:
 <html lang="en">
 ... your COMPLETE code here ...
 </html>
-\`\`\``;
+\`\`\`
+
+STRICT RULE: After the closing \`\`\` put ONLY the BUILT list. NO extra code, NO raw HTML, NO extra text outside the BUILT list.`;
 
 const STARTER = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>Forge</title><style>*{margin:0;padding:0;box-sizing:border-box}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0d0d0d,#0a0a14);font-family:'Courier New',monospace;color:#e0e0e0}.card{text-align:center;padding:40px;border:1px solid #1e1e2e;background:rgba(124,109,250,0.05);max-width:400px}h1{font-size:1.8rem;color:#7c6dfa;margin-bottom:10px}p{color:#555;line-height:1.6;font-size:0.9rem}</style></head><body><div class="card"><div style="font-size:40px;margin-bottom:12px">⚡</div><h1>Forge IDE</h1><p>Your AI is ready!<br/>Type what to build below.</p></div></body></html>`;
 
@@ -586,14 +588,20 @@ Be concise and friendly.`;
                 <div style={{maxWidth:"88%",background:msg.role==="user"?C.accent:C.panel,border:`1px solid ${msg.role==="user"?C.accent:C.border}`,padding:"8px 12px",fontSize:13,lineHeight:1.55,color:msg.role==="user"?"#fff":C.text,borderRadius:8}}>
                   <span style={{whiteSpace:"pre-wrap"}}>{
                     (() => {
-                      const cleaned = msg.content
-                        .replace(/```[\s\S]*?```/g, "")
-                        .replace(/<!DOCTYPE[\s\S]*?<\/html>/gi, "")
-                        .replace(/BUILT:[\s\S]*/i, "")
-                        .replace(/\*\*(.*?)\*\*/g, "$1")
-                        .replace(/`[^`]*`/g, "")
-                        .trim();
-                      return cleaned || (msg.hasCode ? "✓ Built successfully!" : "");
+                      let t = msg.content;
+                      // Remove fenced code blocks
+                      t = t.replace(/```[\s\S]*?```/g, "");
+                      // Remove raw HTML docs
+                      t = t.replace(/<!DOCTYPE[\s\S]*?<\/html>/gi, "");
+                      t = t.replace(/<html[\s\S]*?<\/html>/gi, "");
+                      // Remove BUILT section
+                      t = t.replace(/BUILT:[\s\S]*/i, "");
+                      // Remove any remaining < > tag blocks
+                      t = t.replace(/<[a-zA-Z][^>]*>[\s\S]*?<\/[a-zA-Z]+>/g, "");
+                      // Remove leftover < lines (raw code lines)
+                      t = t.split("\n").filter(line => !line.trim().startsWith("<") && !line.trim().startsWith("function ") && !line.trim().startsWith("const ") && !line.trim().startsWith("var ") && !line.trim().startsWith("//") && !line.includes("}.join(") ).join("\n");
+                      t = t.replace(/\*\*(.*?)\*\*/g, "$1").trim();
+                      return t || (msg.hasCode ? "✓ Built successfully!" : "");
                     })()
                   }</span>
                   {msg.bullets && msg.bullets.length>0 && (
