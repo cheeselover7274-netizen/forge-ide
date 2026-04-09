@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "forge2024";
-const MODEL = "claude-sonnet-4-20250514";
+const MODEL = "claude-sonnet-4-6";
 const FREE_CREDIT_LIMIT = 4000;
 const PRO_PRICE = "$12.99/mo";
 
