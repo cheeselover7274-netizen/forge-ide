@@ -102,9 +102,6 @@ export default function App() {
   const [exIdx, setExIdx] = useState(0);
 
   const chatEnd = useRef(null);
-  const iframeRef = useRef(null);
-
-
   const adminEnd = useRef(null);
   const inputRef = useRef(null);
   const adminRef = useRef(null);
@@ -122,14 +119,7 @@ export default function App() {
 
   useEffect(()=>{ chatEnd.current?.scrollIntoView({behavior:"smooth"}); },[msgs,loading,buildSteps]);
 
-  // Update iframe using blob URL — works reliably on Vercel
-  useEffect(() => {
-    if (!iframeRef.current || !previewHtml) return;
-    const blob = new Blob([previewHtml], {type: "text/html"});
-    const url = URL.createObjectURL(blob);
-    iframeRef.current.src = url;
-    return () => URL.revokeObjectURL(url);
-  }, [previewHtml, previewKey]);
+
   useEffect(()=>{ adminEnd.current?.scrollIntoView({behavior:"smooth"}); },[adminMsgs,adminLoading]);
 
   const callAPI = async (system, messages) => {
@@ -595,7 +585,7 @@ Be concise and friendly.`;
             <span style={{fontSize:10,color:C.muted,marginLeft:4,letterSpacing:2}}>LIVE PREVIEW</span>
             {loading&&<span style={{fontSize:10,color:C.accent,marginLeft:"auto"}}>⚡ Building...</span>}
           </div>
-          <iframe ref={iframeRef} style={{flex:1,border:"none",background:"#fff",width:"100%",height:"100%"}} sandbox="allow-scripts allow-forms allow-modals allow-same-origin allow-popups" title="preview"/>
+          <iframe key={previewKey} srcDoc={previewHtml} style={{flex:1,border:"none",background:"#fff",width:"100%",height:"100%"}} sandbox="allow-scripts allow-forms allow-modals" title="preview"/>
         </div>
 
         {/* RIGHT — CHAT */}
