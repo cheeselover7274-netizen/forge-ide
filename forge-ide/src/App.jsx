@@ -104,19 +104,7 @@ export default function App() {
   const chatEnd = useRef(null);
   const iframeRef = useRef(null);
 
-  // Directly write HTML into iframe — more reliable than srcDoc
-  useEffect(() => {
-    const frame = iframeRef.current;
-    if (!frame || !previewHtml) return;
-    try {
-      const doc = frame.contentDocument || frame.contentWindow?.document;
-      if (doc) {
-        doc.open();
-        doc.write(previewHtml);
-        doc.close();
-      }
-    } catch(e) { console.log("iframe write error:", e); }
-  }, [previewHtml, previewKey]);
+
   const adminEnd = useRef(null);
   const inputRef = useRef(null);
   const adminRef = useRef(null);
@@ -598,7 +586,7 @@ Be concise and friendly.`;
             <span style={{fontSize:10,color:C.muted,marginLeft:4,letterSpacing:2}}>LIVE PREVIEW</span>
             {loading&&<span style={{fontSize:10,color:C.accent,marginLeft:"auto"}}>⚡ Building...</span>}
           </div>
-          <iframe ref={iframeRef} key={previewKey} style={{flex:1,border:"none",background:"#fff",width:"100%",height:"100%"}} sandbox="allow-scripts allow-forms allow-modals allow-same-origin allow-popups" title="preview" allowFullScreen/>
+          <iframe key={previewKey} srcDoc={previewHtml} style={{flex:1,border:"none",background:"#fff",width:"100%",height:"100%"}} sandbox="allow-scripts allow-forms allow-modals allow-same-origin" title="preview"/>
         </div>
 
         {/* RIGHT — CHAT */}
