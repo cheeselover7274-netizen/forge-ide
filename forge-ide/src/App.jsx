@@ -153,11 +153,15 @@ export default function App() {
     const interval = startBuildSteps(prompt);
     const data = await callAPI(FORGE_SYSTEM, apiMsgs);
     clearInterval(interval);
-    const reply = data.content?.map(b=>b.text||"").join("")||"No response.";
+    const reply = data.content?.map(b=>b.text||"").join("")||"";
     const code = extractCode(reply);
     const bullets = extractBullets(reply);
     setBuildSteps([]);
-    setMsgs(m=>[...m,{role:"assistant",content:reply,hasCode:!!code,bullets}]);
+    // Only store clean display text — never the raw code
+    const displayMsg = code
+      ? `✅ Done! I built your ${prompt.replace(/^build a?n? ?/i,"").trim() || "app"}.`
+      : "⚠️ Hmm, I couldn't generate the code. Try rephrasing your prompt.";
+    setMsgs(m=>[...m,{role:"assistant",content:displayMsg,hasCode:!!code,bullets}]);
     setCalls(c=>c+1);
     const tok=(data.usage?.input_tokens||0)+(data.usage?.output_tokens||0);
     setTokens(t=>t+tok);
@@ -586,24 +590,7 @@ Be concise and friendly.`;
             {msgs.map((msg,i)=>(
               <div key={i} style={{display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start"}}>
                 <div style={{maxWidth:"88%",background:msg.role==="user"?C.accent:C.panel,border:`1px solid ${msg.role==="user"?C.accent:C.border}`,padding:"8px 12px",fontSize:13,lineHeight:1.55,color:msg.role==="user"?"#fff":C.text,borderRadius:8}}>
-                  <span style={{whiteSpace:"pre-wrap"}}>{
-                    (() => {
-                      let t = msg.content;
-                      // Remove fenced code blocks
-                      t = t.replace(/```[\s\S]*?```/g, "");
-                      // Remove raw HTML docs
-                      t = t.replace(/<!DOCTYPE[\s\S]*?<\/html>/gi, "");
-                      t = t.replace(/<html[\s\S]*?<\/html>/gi, "");
-                      // Remove BUILT section
-                      t = t.replace(/BUILT:[\s\S]*/i, "");
-                      // Remove any remaining < > tag blocks
-                      t = t.replace(/<[a-zA-Z][^>]*>[\s\S]*?<\/[a-zA-Z]+>/g, "");
-                      // Remove leftover < lines (raw code lines)
-                      t = t.split("\n").filter(line => !line.trim().startsWith("<") && !line.trim().startsWith("function ") && !line.trim().startsWith("const ") && !line.trim().startsWith("var ") && !line.trim().startsWith("//") && !line.includes("}.join(") ).join("\n");
-                      t = t.replace(/\*\*(.*?)\*\*/g, "$1").trim();
-                      return t || (msg.hasCode ? "✓ Built successfully!" : "");
-                    })()
-                  }</span>
+                  <span style={{whiteSpace:"pre-wrap"}}>{msg.content}</span>
                   {msg.bullets && msg.bullets.length>0 && (
                     <div style={{marginTop:8,padding:"8px 10px",background:C.chatBg,border:`1px solid ${C.green}`,borderRadius:6}}>
                       <div style={{fontSize:10,color:C.green,letterSpacing:2,marginBottom:6}}>BUILT</div>
