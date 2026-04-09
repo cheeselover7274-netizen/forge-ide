@@ -36,10 +36,15 @@ ALWAYS use EXACTLY this format for the code:
 const STARTER = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>Forge</title><style>*{margin:0;padding:0;box-sizing:border-box}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0d0d0d,#0a0a14);font-family:'Courier New',monospace;color:#e0e0e0}.card{text-align:center;padding:40px;border:1px solid #1e1e2e;background:rgba(124,109,250,0.05);max-width:400px}h1{font-size:1.8rem;color:#7c6dfa;margin-bottom:10px}p{color:#555;line-height:1.6;font-size:0.9rem}</style></head><body><div class="card"><div style="font-size:40px;margin-bottom:12px">⚡</div><h1>Forge IDE</h1><p>Your AI is ready!<br/>Type what to build below.</p></div></body></html>`;
 
 const extractCode = (text) => {
+  // Try fenced code block
   const m = text.match(/```(?:html|[a-z]*)?\s*\n?([\s\S]*?)```/i);
-  if (m) return m[1].trim();
-  const h = text.match(/(<!DOCTYPE html[\s\S]*<\/html>)/i);
-  return h ? h[1].trim() : null;
+  if (m && m[1].includes('<')) return m[1].trim();
+  // Fallback: raw HTML doc anywhere in text
+  const h = text.match(/(<!DOCTYPE\s+html[\s\S]*?<\/html>)/i);
+  if (h) return h[1].trim();
+  // Last resort: anything with html/head/body tags
+  const b = text.match(/(<html[\s\S]*?<\/html>)/i);
+  return b ? b[1].trim() : null;
 };
 
 const extractBullets = (text) => {
@@ -563,7 +568,7 @@ Be concise and friendly.`;
             <span style={{fontSize:10,color:C.muted,marginLeft:4,letterSpacing:2}}>LIVE PREVIEW</span>
             {loading&&<span style={{fontSize:10,color:C.accent,marginLeft:"auto"}}>⚡ Building...</span>}
           </div>
-          <iframe key={previewKey} srcDoc={previewHtml} style={{flex:1,border:"none",background:"#fff"}} sandbox="allow-scripts allow-forms allow-modals" title="preview"/>
+          <iframe key={previewKey} srcDoc={previewHtml} style={{flex:1,border:"none",background:"#fff",width:"100%"}} sandbox="allow-scripts allow-forms allow-modals allow-same-origin" title="preview"/>
         </div>
 
         {/* RIGHT — CHAT */}
@@ -579,7 +584,18 @@ Be concise and friendly.`;
             {msgs.map((msg,i)=>(
               <div key={i} style={{display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start"}}>
                 <div style={{maxWidth:"88%",background:msg.role==="user"?C.accent:C.panel,border:`1px solid ${msg.role==="user"?C.accent:C.border}`,padding:"8px 12px",fontSize:13,lineHeight:1.55,color:msg.role==="user"?"#fff":C.text,borderRadius:8}}>
-                  <span style={{whiteSpace:"pre-wrap"}}>{msg.content.replace(/```[\s\S]*?```/g,"").replace(/BUILT:[\s\S]*/i,"").replace(/\*\*(.*?)\*\*/g,"$1").trim()}</span>
+                  <span style={{whiteSpace:"pre-wrap"}}>{
+                    (() => {
+                      const cleaned = msg.content
+                        .replace(/```[\s\S]*?```/g, "")
+                        .replace(/<!DOCTYPE[\s\S]*?<\/html>/gi, "")
+                        .replace(/BUILT:[\s\S]*/i, "")
+                        .replace(/\*\*(.*?)\*\*/g, "$1")
+                        .replace(/`[^`]*`/g, "")
+                        .trim();
+                      return cleaned || (msg.hasCode ? "✓ Built successfully!" : "");
+                    })()
+                  }</span>
                   {msg.bullets && msg.bullets.length>0 && (
                     <div style={{marginTop:8,padding:"8px 10px",background:C.chatBg,border:`1px solid ${C.green}`,borderRadius:6}}>
                       <div style={{fontSize:10,color:C.green,letterSpacing:2,marginBottom:6}}>BUILT</div>
