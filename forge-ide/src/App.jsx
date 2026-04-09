@@ -38,15 +38,17 @@ STRICT RULE: After the closing \`\`\` put ONLY the BUILT list. NO extra code, NO
 const STARTER = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>Forge</title><style>*{margin:0;padding:0;box-sizing:border-box}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0d0d0d,#0a0a14);font-family:'Courier New',monospace;color:#e0e0e0}.card{text-align:center;padding:40px;border:1px solid #1e1e2e;background:rgba(124,109,250,0.05);max-width:400px}h1{font-size:1.8rem;color:#7c6dfa;margin-bottom:10px}p{color:#555;line-height:1.6;font-size:0.9rem}</style></head><body><div class="card"><div style="font-size:40px;margin-bottom:12px">⚡</div><h1>Forge IDE</h1><p>Your AI is ready!<br/>Type what to build below.</p></div></body></html>`;
 
 const extractCode = (text) => {
-  // Try fenced code block
-  const m = text.match(/```(?:html|[a-z]*)?\s*\n?([\s\S]*?)```/i);
-  if (m && m[1].includes('<')) return m[1].trim();
-  // Fallback: raw HTML doc anywhere in text
-  const h = text.match(/(<!DOCTYPE\s+html[\s\S]*?<\/html>)/i);
-  if (h) return h[1].trim();
-  // Last resort: anything with html/head/body tags
-  const b = text.match(/(<html[\s\S]*?<\/html>)/i);
-  return b ? b[1].trim() : null;
+  if (!text) return null;
+  // Method 1: standard fenced code block ```html ... ```
+  const fence = text.match(/```html([\s\S]*?)```/i);
+  if (fence) return fence[1].trim();
+  // Method 2: any fenced block containing HTML
+  const anyFence = text.match(/```[a-z]*([\s\S]*?)```/i);
+  if (anyFence && anyFence[1].includes('<!DOCTYPE')) return anyFence[1].trim();
+  // Method 3: raw HTML document in the text
+  const raw = text.match(/(<!DOCTYPE\s+html[\s\S]*?<\/html>)/i);
+  if (raw) return raw[1].trim();
+  return null;
 };
 
 const extractBullets = (text) => {
@@ -158,10 +160,11 @@ export default function App() {
     const bullets = extractBullets(reply);
     setBuildSteps([]);
     // Only store clean display text — never the raw code
+    const label = prompt.replace(/^build (a |an )?/i,"").trim() || "app";
     const displayMsg = code
-      ? `✅ Done! I built your ${prompt.replace(/^build a?n? ?/i,"").trim() || "app"}.`
-      : "⚠️ Hmm, I couldn't generate the code. Try rephrasing your prompt.";
-    setMsgs(m=>[...m,{role:"assistant",content:displayMsg,hasCode:!!code,bullets}]);
+      ? `✅ Done! Built your ${label}.`
+      : `⚠️ The AI responded but I couldn't extract the code. Try again or rephrase.`;
+    setMsgs(m=>[...m,{role:"assistant",content:displayMsg,hasCode:!!code,bullets,failed:!code}]);
     setCalls(c=>c+1);
     const tok=(data.usage?.input_tokens||0)+(data.usage?.output_tokens||0);
     setTokens(t=>t+tok);
