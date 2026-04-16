@@ -130,8 +130,9 @@ export default function App() {
 
   const callAPI = async (system, messages) => {
     const r = await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:MODEL,max_tokens:4096,system,messages})});
-    if(!r.ok) throw new Error(`API error ${r.status}`);
-    return r.json();
+    const data = await r.json();
+    if(!r.ok) throw new Error(data.error || `API error ${r.status}`);
+    return data;
   };
 
   const startBuildSteps = () => {
@@ -164,7 +165,7 @@ export default function App() {
       setHistory(h=>[{id:Date.now(),prompt,time:new Date().toLocaleTimeString(),tok},...h].slice(0,100));
       setMsgs(m=>[...m,{role:"assistant",content:`✅ Done! Built your ${label}.`,hasCode:true,bullets}]);
     } else {
-      setMsgs(m=>[...m,{role:"assistant",content:`⚠️ Something went wrong — try rephrasing your prompt.`,hasCode:false,bullets:[]}]);
+      setMsgs(m=>[...m,{role:"assistant",content:`⚠️ No code returned. The AI may have responded without HTML. Try again!`,hasCode:false,bullets:[]}]);
     }
   };
 
@@ -173,7 +174,7 @@ export default function App() {
     setView("ide");
     setLoading(true);
     setMsgs(m=>[...m,{role:"user",content:prompt}]);
-    try { await runBuild(prompt, STARTER); } catch(e){ setMsgs(m=>[...m,{role:"assistant",content:`⚠️ Error: ${e.message}`}]); setBuildSteps([]); }
+    try { await runBuild(prompt, STARTER); } catch(e){ setBuildSteps([]); setMsgs(m=>[...m,{role:"assistant",content:`⚠️ Error: ${e.message}`}]); }
     setLoading(false);
   };
 
@@ -184,7 +185,7 @@ export default function App() {
     setInput("");
     setMsgs(m=>[...m,{role:"user",content:p}]);
     setLoading(true);
-    try { await runBuild(p, previewHtml); } catch(e){ setMsgs(m=>[...m,{role:"assistant",content:`⚠️ Error: ${e.message}`}]); setBuildSteps([]); }
+    try { await runBuild(p, previewHtml); } catch(e){ setBuildSteps([]); setMsgs(m=>[...m,{role:"assistant",content:`⚠️ Error: ${e.message}`}]); }
     setLoading(false);
     setTimeout(()=>inputRef.current?.focus(),100);
   };
