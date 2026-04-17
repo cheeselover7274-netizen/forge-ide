@@ -51,12 +51,18 @@ p{color:#555;line-height:1.6;font-size:0.9rem}
 
 const extractCode = (text) => {
   if (!text) return null;
-  const fence = text.match(/```html([\s\S]*?)```/i);
-  if (fence && fence[1].trim()) return fence[1].trim();
-  const anyFence = text.match(/```[a-z]*([\s\S]*?)```/i);
-  if (anyFence && anyFence[1].includes('<!DOCTYPE')) return anyFence[1].trim();
-  const raw = text.match(/(<!DOCTYPE\s+html[\s\S]*?<\/html>)/i);
-  if (raw) return raw[1].trim();
+  // Method 1: ```html ... ```
+  const m1 = text.match(/```html\s*([\s\S]*?)```/i);
+  if (m1 && m1[1].trim().length > 50) return m1[1].trim();
+  // Method 2: ``` ... ``` containing DOCTYPE
+  const m2 = text.match(/```[a-zA-Z]*\s*([\s\S]*?)```/i);
+  if (m2 && m2[1].includes('<!DOCTYPE')) return m2[1].trim();
+  // Method 3: raw DOCTYPE anywhere
+  const m3 = text.match(/(<!DOCTYPE[\s\S]*?<\/html>)/i);
+  if (m3) return m3[1].trim();
+  // Method 4: <html anywhere
+  const m4 = text.match(/(<html[\s\S]*?<\/html>)/i);
+  if (m4) return m4[1].trim();
   return null;
 };
 
@@ -151,7 +157,8 @@ export default function App() {
     const iv = startBuildSteps();
     const data = await callAPI(FORGE_SYSTEM, apiMsgs);
     clearInterval(iv);
-    const reply = data.content?.map(b=>b.text||"").join("")||"";
+    // Extract only text blocks (skip thinking blocks from Sonnet 4.6)
+    const reply = data.content?.filter(b=>b.type==="text").map(b=>b.text||"").join("")||"";
     const code = extractCode(reply);
     const bullets = extractBullets(reply);
     setBuildSteps([]);

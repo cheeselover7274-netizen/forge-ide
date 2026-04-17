@@ -11,8 +11,6 @@ export default async function handler(req, res) {
 
   try {
     const { model, system, messages } = req.body;
-    // Force 4096 tokens so full HTML apps never get cut off
-    const max_tokens = 4096;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -21,7 +19,13 @@ export default async function handler(req, res) {
         "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
       },
-      body: JSON.stringify({ model, max_tokens, system, messages }),
+      body: JSON.stringify({
+        model,
+        max_tokens: 8000,
+        thinking: { type: "disabled" },
+        system,
+        messages,
+      }),
     });
 
     const data = await response.json();
