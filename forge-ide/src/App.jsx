@@ -105,7 +105,7 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentUser, setCurrentUser] = useState("");
   const [showUpgrade, setShowUpgrade] = useState(false);
-  const [authPage, setAuthPage] = useState("signin");
+  const [authPage, setAuthPage] = useState("");
   const [lu, setLu] = useState(""); const [lp, setLp] = useState(""); const [le, setLe] = useState("");
   const [su, setSu] = useState(""); const [se, setSe] = useState(""); const [sp, setSp] = useState(""); const [sp2, setSp2] = useState(""); const [sErr, setSErr] = useState(""); const [sOk, setSOk] = useState("");
   const [view, setView] = useState("home");
@@ -272,54 +272,127 @@ Be concise and friendly.`;
     setAuthPage("signin"); setLu(su); setLp("");
   };
 
-  // ── AUTH ───────────────────────────────────────────────────────
+  // ── LANDING + AUTH (not logged in) ────────────────────────────
   if(!authed) return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#06061a,#0e0830,#0a0a20)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"monospace",padding:16}}>
-      <div style={{width:"100%",maxWidth:400}}>
-        <div style={{textAlign:"center",marginBottom:28}}>
-          <div style={{fontSize:52,marginBottom:8}}>⚡</div>
-          <div style={{fontSize:30,fontWeight:900,background:"linear-gradient(90deg,#7c6dfa,#a855f7)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>FORGE IDE</div>
-          <div style={{fontSize:11,color:"#5050a0",letterSpacing:4,marginTop:4}}>POWERED BY CLAUDE SONNET 4.6</div>
+    <div style={{minHeight:"100vh",background:"#06061a",fontFamily:"monospace",color:"#e0e0ff",display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}>
+      {/* Animated background orbs */}
+      <div style={{position:"absolute",inset:0,overflow:"hidden",pointerEvents:"none"}}>
+        <div style={{position:"absolute",top:"-20%",left:"10%",width:600,height:600,borderRadius:"50%",background:"radial-gradient(circle,#7c6dfa18,transparent 70%)",animation:"pulse1 8s ease-in-out infinite"}}/>
+        <div style={{position:"absolute",top:"30%",right:"-10%",width:500,height:500,borderRadius:"50%",background:"radial-gradient(circle,#a855f718,transparent 70%)",animation:"pulse2 10s ease-in-out infinite"}}/>
+        <div style={{position:"absolute",bottom:"-10%",left:"30%",width:400,height:400,borderRadius:"50%",background:"radial-gradient(circle,#ec489918,transparent 70%)",animation:"pulse3 12s ease-in-out infinite"}}/>
+      </div>
+
+      {/* NAV */}
+      <nav style={{height:64,display:"flex",alignItems:"center",padding:"0 32px",borderBottom:"1px solid #ffffff08",background:"rgba(6,6,26,0.8)",backdropFilter:"blur(20px)",flexShrink:0,position:"relative",zIndex:10}}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,#7c6dfa,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>⚡</div>
+          <span style={{fontWeight:900,fontSize:18,background:"linear-gradient(90deg,#7c6dfa,#a855f7)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Forge</span>
         </div>
-        <div style={{display:"flex",background:"#0a0a1a",border:"1px solid #2a2a4a",borderRadius:8,padding:4,marginBottom:16}}>
-          {[["signin","Sign In"],["signup","Sign Up"]].map(([id,label])=>(
-            <button key={id} onClick={()=>{setAuthPage(id);setLe("");setSErr("");setSOk("");}}
-              style={{flex:1,padding:"8px 0",fontFamily:"monospace",fontSize:12,fontWeight:700,cursor:"pointer",borderRadius:6,border:"none",background:authPage===id?"linear-gradient(90deg,#7c6dfa,#a855f7)":"transparent",color:authPage===id?"#fff":"#5050a0",letterSpacing:1}}>
-              {label}
-            </button>
+        <div style={{flex:1}}/>
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={()=>setAuthPage("signin")}
+            style={{background:"transparent",border:"1px solid #3a2a6a",color:"#a090d0",padding:"8px 20px",fontFamily:"monospace",fontSize:12,cursor:"pointer",borderRadius:8}}>
+            Sign In
+          </button>
+          <button onClick={()=>setAuthPage("signup")}
+            style={{background:"linear-gradient(135deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:"8px 20px",fontFamily:"monospace",fontSize:12,fontWeight:900,cursor:"pointer",borderRadius:8,letterSpacing:1}}>
+            Get Started →
+          </button>
+        </div>
+      </nav>
+
+      {/* HERO */}
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"60px 20px 40px",textAlign:"center",position:"relative",zIndex:1}}>
+        <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"#7c6dfa15",border:"1px solid #7c6dfa40",borderRadius:20,padding:"6px 16px",marginBottom:32,fontSize:11,color:"#a855f7"}}>
+          <span style={{width:6,height:6,borderRadius:"50%",background:"#4ade80",display:"inline-block",boxShadow:"0 0 6px #4ade80"}}/>
+          Powered by Claude Sonnet 4.6 — Now live
+        </div>
+
+        <div style={{width:90,height:90,borderRadius:"50%",background:"radial-gradient(circle at 35% 35%,#a855f7,#7c6dfa)",boxShadow:"0 0 60px #7c6dfa60,0 0 120px #a855f730",display:"flex",alignItems:"center",justifyContent:"center",fontSize:40,marginBottom:36}}>⚡</div>
+
+        <h1 style={{fontSize:"clamp(2.5rem,6vw,4rem)",fontWeight:900,lineHeight:1.1,marginBottom:20,letterSpacing:-2,maxWidth:700}}>
+          <span style={{color:"#ffffff"}}>Forge is your</span><br/>
+          <span style={{background:"linear-gradient(90deg,#7c6dfa,#a855f7,#ec4899)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>co-AI assistant</span>
+        </h1>
+
+        <p style={{fontSize:"clamp(1rem,2vw,1.15rem)",color:"#6060a0",maxWidth:520,lineHeight:1.9,marginBottom:40}}>
+          Build games, apps and tools in seconds.<br/>Just describe it — Forge builds it live.
+        </p>
+
+        {/* CTA buttons */}
+        <div style={{display:"flex",gap:14,marginBottom:48,flexWrap:"wrap",justifyContent:"center"}}>
+          <button onClick={()=>setAuthPage("signup")}
+            style={{background:"linear-gradient(135deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:"16px 36px",fontFamily:"monospace",fontSize:16,fontWeight:900,cursor:"pointer",borderRadius:12,letterSpacing:1,boxShadow:"0 4px 30px #7c6dfa50"}}>
+            Start Building Free →
+          </button>
+          <button onClick={()=>setAuthPage("signin")}
+            style={{background:"transparent",border:"1.5px solid #3a2a6a",color:"#a090d0",padding:"16px 28px",fontFamily:"monospace",fontSize:14,cursor:"pointer",borderRadius:12}}>
+            Sign In
+          </button>
+        </div>
+
+        {/* Features */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(155px,1fr))",gap:12,maxWidth:700,width:"100%",marginBottom:48}}>
+          {[["⚡","Instant Builds","Seconds not minutes"],["🎮","Full Games","Playable & complete"],["🎨","Beautiful UI","Dark themes & animations"],["🔄","Live Preview","See it as it's built"],["🤖","Claude 4.6","Latest AI model"],["∞","Unlimited*","Build anything"]].map(([icon,title,sub])=>(
+            <div key={title} style={{background:"#0d0d24",border:"1px solid #1e1e40",borderRadius:12,padding:"16px 14px",textAlign:"left"}}>
+              <div style={{fontSize:22,marginBottom:8}}>{icon}</div>
+              <div style={{fontSize:12,fontWeight:700,color:"#c8c8ff",marginBottom:4}}>{title}</div>
+              <div style={{fontSize:10,color:"#4040a0"}}>{sub}</div>
+            </div>
           ))}
         </div>
-        <div style={{background:"#111128",border:"1px solid #2a2a4a",padding:28,borderRadius:12,boxShadow:"0 20px 60px rgba(0,0,0,0.5)"}}>
-          {authPage==="signin"&&<>
-            <div style={{fontSize:10,color:"#4040a0",letterSpacing:4,marginBottom:18}}>SIGN IN</div>
-            {sOk&&<div style={{color:"#4ade80",fontSize:12,marginBottom:12,padding:"8px 12px",background:"#0a1a0a",border:"1px solid #4ade80",borderRadius:6}}>{sOk}</div>}
-            {[["USERNAME",lu,setLu,"text"],["PASSWORD",lp,setLp,"password"]].map(([label,val,set,type])=>(
-              <div key={label} style={{marginBottom:14}}>
-                <div style={{fontSize:10,color:"#5050a0",marginBottom:5,letterSpacing:2}}>{label}</div>
-                <input value={val} onChange={e=>set(e.target.value)} type={type} onKeyDown={e=>e.key==="Enter"&&login()}
-                  style={{width:"100%",boxSizing:"border-box",background:"#0a0a1a",border:"1px solid #2a2a4a",color:"#c8c8e0",padding:"11px 13px",fontFamily:"monospace",fontSize:14,outline:"none",borderRadius:6}}/>
-              </div>
-            ))}
-            {le&&<div style={{color:"#f87171",fontSize:12,marginBottom:10}}>{le}</div>}
-            <button onClick={login} style={{width:"100%",background:"linear-gradient(90deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:13,fontFamily:"monospace",fontSize:15,fontWeight:900,cursor:"pointer",letterSpacing:2,borderRadius:6}}>SIGN IN →</button>
-            <div style={{marginTop:12,textAlign:"center",fontSize:11,color:"#4040a0"}}>No account? <span onClick={()=>setAuthPage("signup")} style={{color:"#7c6dfa",cursor:"pointer",textDecoration:"underline"}}>Sign up free</span></div>
-          </>}
-          {authPage==="signup"&&<>
-            <div style={{fontSize:10,color:"#4040a0",letterSpacing:4,marginBottom:18}}>CREATE ACCOUNT</div>
-            {[["USERNAME",su,setSu,"text"],["EMAIL",se,setSe,"email"],["PASSWORD",sp,setSp,"password"],["CONFIRM PASSWORD",sp2,setSp2,"password"]].map(([label,val,set,type])=>(
-              <div key={label} style={{marginBottom:12}}>
-                <div style={{fontSize:10,color:"#5050a0",marginBottom:5,letterSpacing:2}}>{label}</div>
-                <input value={val} onChange={e=>set(e.target.value)} type={type} onKeyDown={e=>e.key==="Enter"&&signup()}
-                  style={{width:"100%",boxSizing:"border-box",background:"#0a0a1a",border:"1px solid #2a2a4a",color:"#c8c8e0",padding:"11px 13px",fontFamily:"monospace",fontSize:14,outline:"none",borderRadius:6}}/>
-              </div>
-            ))}
-            {sErr&&<div style={{color:"#f87171",fontSize:12,marginBottom:10}}>{sErr}</div>}
-            <button onClick={signup} style={{width:"100%",background:"linear-gradient(90deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:13,fontFamily:"monospace",fontSize:15,fontWeight:900,cursor:"pointer",letterSpacing:2,borderRadius:6}}>CREATE ACCOUNT →</button>
-            <div style={{marginTop:12,textAlign:"center",fontSize:11,color:"#4040a0"}}>Have account? <span onClick={()=>setAuthPage("signin")} style={{color:"#7c6dfa",cursor:"pointer",textDecoration:"underline"}}>Sign in</span></div>
-          </>}
-        </div>
+        <div style={{fontSize:10,color:"#2a2a4a"}}>*Free plan: 4,000 tokens · Pro: unlimited</div>
       </div>
-      <style>{`input:focus{border-color:#7c6dfa!important;}`}</style>
+
+      {/* AUTH MODAL */}
+      {authPage&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100,padding:16}} onClick={()=>setAuthPage("")}>
+          <div style={{background:"#111128",border:"1px solid #2a2a4a",padding:32,borderRadius:16,width:"100%",maxWidth:380,boxShadow:"0 20px 60px rgba(0,0,0,0.7)"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",background:"#0a0a1a",border:"1px solid #2a2a4a",borderRadius:8,padding:4,marginBottom:20}}>
+              {[["signin","Sign In"],["signup","Sign Up"]].map(([id,label])=>(
+                <button key={id} onClick={()=>{setAuthPage(id);setLe("");setSErr("");setSOk("");}}
+                  style={{flex:1,padding:"8px 0",fontFamily:"monospace",fontSize:12,fontWeight:700,cursor:"pointer",borderRadius:6,border:"none",background:authPage===id?"linear-gradient(90deg,#7c6dfa,#a855f7)":"transparent",color:authPage===id?"#fff":"#5050a0"}}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            {authPage==="signin"&&<>
+              {sOk&&<div style={{color:"#4ade80",fontSize:12,marginBottom:12,padding:"8px 12px",background:"#0a1a0a",border:"1px solid #4ade80",borderRadius:6}}>{sOk}</div>}
+              {[["USERNAME",lu,setLu,"text"],["PASSWORD",lp,setLp,"password"]].map(([label,val,set,type])=>(
+                <div key={label} style={{marginBottom:14}}>
+                  <div style={{fontSize:10,color:"#5050a0",marginBottom:5,letterSpacing:2}}>{label}</div>
+                  <input value={val} onChange={e=>set(e.target.value)} type={type} onKeyDown={e=>e.key==="Enter"&&login()}
+                    style={{width:"100%",boxSizing:"border-box",background:"#0a0a1a",border:"1px solid #2a2a4a",color:"#c8c8e0",padding:"11px 13px",fontFamily:"monospace",fontSize:14,outline:"none",borderRadius:6}}/>
+                </div>
+              ))}
+              {le&&<div style={{color:"#f87171",fontSize:12,marginBottom:10}}>{le}</div>}
+              <button onClick={login} style={{width:"100%",background:"linear-gradient(90deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:13,fontFamily:"monospace",fontSize:15,fontWeight:900,cursor:"pointer",letterSpacing:2,borderRadius:8}}>SIGN IN →</button>
+              <div style={{marginTop:12,textAlign:"center",fontSize:11,color:"#4040a0"}}>No account? <span onClick={()=>setAuthPage("signup")} style={{color:"#7c6dfa",cursor:"pointer",textDecoration:"underline"}}>Sign up free</span></div>
+            </>}
+            {authPage==="signup"&&<>
+              {[["USERNAME",su,setSu,"text"],["EMAIL",se,setSe,"email"],["PASSWORD",sp,setSp,"password"],["CONFIRM PASSWORD",sp2,setSp2,"password"]].map(([label,val,set,type])=>(
+                <div key={label} style={{marginBottom:12}}>
+                  <div style={{fontSize:10,color:"#5050a0",marginBottom:5,letterSpacing:2}}>{label}</div>
+                  <input value={val} onChange={e=>set(e.target.value)} type={type} onKeyDown={e=>e.key==="Enter"&&signup()}
+                    style={{width:"100%",boxSizing:"border-box",background:"#0a0a1a",border:"1px solid #2a2a4a",color:"#c8c8e0",padding:"11px 13px",fontFamily:"monospace",fontSize:14,outline:"none",borderRadius:6}}/>
+                </div>
+              ))}
+              {sErr&&<div style={{color:"#f87171",fontSize:12,marginBottom:10}}>{sErr}</div>}
+              <button onClick={signup} style={{width:"100%",background:"linear-gradient(90deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:13,fontFamily:"monospace",fontSize:15,fontWeight:900,cursor:"pointer",letterSpacing:2,borderRadius:8}}>CREATE ACCOUNT →</button>
+              <div style={{marginTop:12,textAlign:"center",fontSize:11,color:"#4040a0"}}>Have account? <span onClick={()=>setAuthPage("signin")} style={{color:"#7c6dfa",cursor:"pointer",textDecoration:"underline"}}>Sign in</span></div>
+            </>}
+            <button onClick={()=>setAuthPage("")} style={{position:"absolute",top:12,right:12,background:"transparent",border:"none",color:"#4040a0",fontSize:18,cursor:"pointer"}}>✕</button>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        input:focus{border-color:#7c6dfa!important;}
+        button:hover{opacity:0.85}
+        @keyframes pulse1{0%,100%{transform:scale(1) translate(0,0)}50%{transform:scale(1.1) translate(20px,-20px)}}
+        @keyframes pulse2{0%,100%{transform:scale(1) translate(0,0)}50%{transform:scale(1.15) translate(-30px,20px)}}
+        @keyframes pulse3{0%,100%{transform:scale(1) translate(0,0)}50%{transform:scale(1.05) translate(10px,-30px)}}
+      `}</style>
     </div>
   );
 
@@ -366,51 +439,102 @@ Be concise and friendly.`;
 
   // ── HOMEPAGE ───────────────────────────────────────────────────
   if(view==="home") return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#06061a,#0e0830,#0a0a20)",fontFamily:"monospace",color:"#e0e0ff",display:"flex",flexDirection:"column"}}>
-      <div style={{height:52,display:"flex",alignItems:"center",padding:"0 28px",borderBottom:"1px solid #1a1a3a",background:"rgba(0,0,0,0.3)",flexShrink:0}}>
-        <span style={{fontSize:22}}>⚡</span>
-        <span style={{fontWeight:900,fontSize:16,background:"linear-gradient(90deg,#7c6dfa,#a855f7)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginLeft:8}}>FORGE</span>
-        <div style={{flex:1}}/>
-        {isAdmin&&<span style={{fontSize:9,color:"#4ade80",background:"#0a1a0a",border:"1px solid #4ade80",padding:"3px 8px",borderRadius:3,marginRight:10}}>∞ ADMIN</span>}
-        <span style={{fontSize:10,color:"#5050a0",marginRight:12}}>👤 {currentUser}</span>
-        <button onClick={()=>setView("ide")} style={{background:"#7c6dfa20",border:"1px solid #7c6dfa",color:"#7c6dfa",padding:"6px 16px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:6,marginRight:8}}>Open IDE</button>
-        {isAdmin&&<button onClick={()=>setView("admin")} style={{background:"transparent",border:"1px solid #2a2a4a",color:"#6060a0",padding:"6px 14px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:6,marginRight:8}}>⚙ Admin</button>}
-        <button onClick={()=>{setAuthed(false);setCurrentUser("");setIsAdmin(false);}} style={{background:"transparent",border:"1px solid #2a2a4a",color:"#6060a0",padding:"6px 12px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:6}}>Log out</button>
+    <div style={{minHeight:"100vh",background:"#06061a",fontFamily:"monospace",color:"#e0e0ff",display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}>
+      {/* Animated background orbs */}
+      <div style={{position:"absolute",inset:0,overflow:"hidden",pointerEvents:"none"}}>
+        <div style={{position:"absolute",top:"-20%",left:"10%",width:600,height:600,borderRadius:"50%",background:"radial-gradient(circle,#7c6dfa18,transparent 70%)",animation:"pulse1 8s ease-in-out infinite"}}/>
+        <div style={{position:"absolute",top:"30%",right:"-10%",width:500,height:500,borderRadius:"50%",background:"radial-gradient(circle,#a855f718,transparent 70%)",animation:"pulse2 10s ease-in-out infinite"}}/>
+        <div style={{position:"absolute",bottom:"-10%",left:"30%",width:400,height:400,borderRadius:"50%",background:"radial-gradient(circle,#ec489918,transparent 70%)",animation:"pulse3 12s ease-in-out infinite"}}/>
       </div>
-      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 20px",textAlign:"center"}}>
-        <div style={{width:80,height:80,borderRadius:"50%",background:"radial-gradient(circle,#7c6dfa,#a855f7)",boxShadow:"0 0 60px #7c6dfa80,0 0 120px #a855f740",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,marginBottom:32}}>⚡</div>
-        <h1 style={{fontSize:"clamp(2rem,5vw,3.2rem)",fontWeight:900,lineHeight:1.15,marginBottom:14,letterSpacing:-1}}>
-          <span style={{background:"linear-gradient(90deg,#ffffff,#c8c8ff)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Forge is your</span><br/>
+
+      {/* NAV */}
+      <nav style={{height:64,display:"flex",alignItems:"center",padding:"0 32px",borderBottom:"1px solid #ffffff0a",background:"rgba(6,6,26,0.8)",backdropFilter:"blur(20px)",flexShrink:0,position:"relative",zIndex:10}}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,#7c6dfa,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>⚡</div>
+          <span style={{fontWeight:900,fontSize:18,background:"linear-gradient(90deg,#7c6dfa,#a855f7)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Forge</span>
+        </div>
+        <div style={{flex:1}}/>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          {isAdmin&&<span style={{fontSize:9,color:"#4ade80",background:"#0a1a0a",border:"1px solid #4ade80",padding:"3px 8px",borderRadius:3}}>∞ ADMIN</span>}
+          <span style={{fontSize:12,color:"#5050a0"}}>👤 {currentUser}</span>
+          {isAdmin&&<button onClick={()=>setView("admin")} style={{background:"transparent",border:"1px solid #2a2a4a",color:"#6060a0",padding:"7px 14px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:6}}>⚙ Admin</button>}
+          <button onClick={()=>setView("ide")} style={{background:"linear-gradient(90deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:"8px 20px",fontFamily:"monospace",fontSize:12,fontWeight:900,cursor:"pointer",borderRadius:8,letterSpacing:1}}>Open IDE ⚡</button>
+          <button onClick={()=>{setAuthed(false);setCurrentUser("");setIsAdmin(false);}} style={{background:"transparent",border:"1px solid #2a2a4a",color:"#5050a0",padding:"7px 12px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:6}}>Sign out</button>
+        </div>
+      </nav>
+
+      {/* HERO */}
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"60px 20px 40px",textAlign:"center",position:"relative",zIndex:1}}>
+        {/* Badge */}
+        <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"#7c6dfa15",border:"1px solid #7c6dfa40",borderRadius:20,padding:"6px 16px",marginBottom:32,fontSize:11,color:"#a855f7"}}>
+          <span style={{width:6,height:6,borderRadius:"50%",background:"#4ade80",display:"inline-block",boxShadow:"0 0 6px #4ade80"}}></span>
+          Powered by Claude Sonnet 4.6
+        </div>
+
+        {/* Glowing orb */}
+        <div style={{width:90,height:90,borderRadius:"50%",background:"radial-gradient(circle at 35% 35%,#a855f7,#7c6dfa)",boxShadow:"0 0 60px #7c6dfa60,0 0 120px #a855f730",display:"flex",alignItems:"center",justifyContent:"center",fontSize:40,marginBottom:36}}>⚡</div>
+
+        {/* Headline */}
+        <h1 style={{fontSize:"clamp(2.5rem,6vw,4rem)",fontWeight:900,lineHeight:1.1,marginBottom:20,letterSpacing:-2,maxWidth:700}}>
+          <span style={{color:"#ffffff"}}>Forge is your</span><br/>
           <span style={{background:"linear-gradient(90deg,#7c6dfa,#a855f7,#ec4899)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>co-AI assistant</span>
         </h1>
-        <p style={{fontSize:"clamp(0.9rem,2vw,1.05rem)",color:"#7070b0",maxWidth:500,lineHeight:1.8,marginBottom:40}}>
-          Powered by <strong style={{color:"#a855f7"}}>Claude Sonnet 4.6</strong> — start typing and watch your idea come to life.<br/>Games, apps, tools, built in seconds.
+
+        <p style={{fontSize:"clamp(1rem,2vw,1.15rem)",color:"#6060a0",maxWidth:520,lineHeight:1.9,marginBottom:48}}>
+          Start typing your prompt and watch your idea<br/>come to life instantly — games, apps & tools.
         </p>
-        <div style={{width:"100%",maxWidth:620,background:"#0d0d24",border:"2px solid #3a2a6a",borderRadius:16,padding:4,boxShadow:"0 0 40px #7c6dfa30",marginBottom:20}}>
-          <div style={{display:"flex",alignItems:"flex-end",gap:8,padding:"10px 10px 10px 18px"}}>
+
+        {/* Big prompt input */}
+        <div style={{width:"100%",maxWidth:660,marginBottom:20,position:"relative"}}>
+          <div style={{background:"#0d0d2a",border:"1.5px solid #3a2a6a",borderRadius:16,padding:"4px 4px 4px 20px",display:"flex",alignItems:"flex-end",gap:8,boxShadow:"0 0 40px #7c6dfa20,inset 0 1px 0 #ffffff08"}}>
             <textarea value={homeInput} onChange={e=>setHomeInput(e.target.value)} onKeyDown={handleHomeKey}
-              placeholder={typed.length ? typed : "What do you want to build?"} rows={2}
-              style={{flex:1,background:"transparent",border:"none",outline:"none",color:"#e0e0ff",fontFamily:"monospace",fontSize:15,resize:"none",lineHeight:1.5,padding:"4px 0"}}/>
+              placeholder={typed||"What do you want to build today?"} rows={2}
+              style={{flex:1,background:"transparent",border:"none",outline:"none",color:"#e0e0ff",fontFamily:"monospace",fontSize:15,resize:"none",lineHeight:1.6,padding:"10px 0"}}/>
             <button onClick={()=>startBuilding(homeInput)}
-              style={{background:homeInput.trim()?"linear-gradient(90deg,#7c6dfa,#a855f7)":"#1a1a3a",border:"none",color:homeInput.trim()?"#fff":"#3a3a6a",padding:"12px 22px",fontFamily:"monospace",fontSize:13,fontWeight:900,cursor:homeInput.trim()?"pointer":"default",borderRadius:10,flexShrink:0,letterSpacing:1}}>
+              style={{background:homeInput.trim()?"linear-gradient(135deg,#7c6dfa,#a855f7)":"#1a1a3a",border:"none",color:homeInput.trim()?"#fff":"#3a3a6a",padding:"14px 24px",fontFamily:"monospace",fontSize:14,fontWeight:900,cursor:homeInput.trim()?"pointer":"default",borderRadius:12,flexShrink:0,letterSpacing:1,marginBottom:2,transition:"all 0.2s"}}>
               BUILD ⚡
             </button>
           </div>
         </div>
-        <div style={{display:"flex",flexWrap:"wrap",gap:8,justifyContent:"center",maxWidth:580,marginBottom:48}}>
+
+        {/* Example chips */}
+        <div style={{display:"flex",flexWrap:"wrap",gap:8,justifyContent:"center",maxWidth:620,marginBottom:60}}>
           {EXAMPLES.map(p=>(
-            <button key={p} onClick={()=>startBuilding(p)} style={{background:"#0d0d24",border:"1px solid #2a2a4a",color:"#7070b0",padding:"6px 14px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:20}}>{p}</button>
+            <button key={p} onClick={()=>startBuilding(p)}
+              style={{background:"#0d0d24",border:"1px solid #1e1e40",color:"#6060a0",padding:"7px 16px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:20,transition:"all 0.15s"}}>
+              {p}
+            </button>
           ))}
         </div>
-        <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center"}}>
-          {[["⚡","Instant builds"],["🎮","Full games"],["🎨","Beautiful UI"],["🔄","Live preview"],["🤖","Claude Sonnet 4.6"]].map(([icon,label])=>(
-            <div key={label} style={{display:"flex",alignItems:"center",gap:6,background:"#0d0d24",border:"1px solid #1a1a3a",padding:"8px 16px",borderRadius:20,fontSize:12,color:"#5050a0"}}>
-              <span>{icon}</span><span>{label}</span>
+
+        {/* Features grid */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,maxWidth:700,width:"100%",marginBottom:48}}>
+          {[
+            ["⚡","Instant Builds","Seconds not minutes"],
+            ["🎮","Full Games","Playable & complete"],
+            ["🎨","Beautiful UI","Dark themes & animations"],
+            ["🔄","Live Preview","See it as it's built"],
+            ["🤖","Claude 4.6","Latest AI model"],
+            ["∞","Unlimited*","Build anything"],
+          ].map(([icon,title,sub])=>(
+            <div key={title} style={{background:"#0d0d24",border:"1px solid #1e1e40",borderRadius:12,padding:"16px 14px",textAlign:"left"}}>
+              <div style={{fontSize:22,marginBottom:8}}>{icon}</div>
+              <div style={{fontSize:12,fontWeight:700,color:"#c8c8ff",marginBottom:4}}>{title}</div>
+              <div style={{fontSize:10,color:"#4040a0"}}>{sub}</div>
             </div>
           ))}
         </div>
+
+        <div style={{fontSize:10,color:"#2a2a4a"}}>*Free plan: 4,000 tokens · Pro plan: unlimited</div>
       </div>
-      <style>{`textarea::placeholder{color:#3a3a6a}button:hover{opacity:0.85}`}</style>
+
+      <style>{`
+        textarea::placeholder{color:#2a2a4a}
+        button:hover{opacity:0.85}
+        @keyframes pulse1{0%,100%{transform:scale(1) translate(0,0)}50%{transform:scale(1.1) translate(20px,-20px)}}
+        @keyframes pulse2{0%,100%{transform:scale(1) translate(0,0)}50%{transform:scale(1.15) translate(-30px,20px)}}
+        @keyframes pulse3{0%,100%{transform:scale(1) translate(0,0)}50%{transform:scale(1.05) translate(10px,-30px)}}
+      `}</style>
     </div>
   );
 
