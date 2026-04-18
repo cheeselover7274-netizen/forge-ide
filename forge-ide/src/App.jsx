@@ -51,18 +51,30 @@ p{color:#555;line-height:1.6;font-size:0.9rem}
 
 const extractCode = (text) => {
   if (!text) return null;
-  // Method 1: ```html ... ```
-  const m1 = text.match(/```html\s*([\s\S]*?)```/i);
-  if (m1 && m1[1].trim().length > 50) return m1[1].trim();
-  // Method 2: ``` ... ``` containing DOCTYPE
-  const m2 = text.match(/```[a-zA-Z]*\s*([\s\S]*?)```/i);
-  if (m2 && m2[1].includes('<!DOCTYPE')) return m2[1].trim();
-  // Method 3: raw DOCTYPE anywhere
-  const m3 = text.match(/(<!DOCTYPE[\s\S]*?<\/html>)/i);
-  if (m3) return m3[1].trim();
-  // Method 4: <html anywhere
-  const m4 = text.match(/(<html[\s\S]*?<\/html>)/i);
+  // Method 1: ```html ... ``` (complete)
+  const m1 = text.match(/```html[\s\S]*?\n([\s\S]*?)```/i);
+  if (m1 && m1[1].trim().length > 100) return m1[1].trim();
+  // Method 2: ```html with no closing (truncated response)
+  const m2 = text.match(/```html[\s\S]*?\n([\s\S]*)/i);
+  if (m2 && m2[1].includes('<!DOCTYPE')) {
+    let code = m2[1].trim();
+    // Close any open tags if truncated
+    if (!code.includes('</html>')) code += '\n</body></html>';
+    return code;
+  }
+  // Method 3: ``` containing DOCTYPE (complete)
+  const m3 = text.match(/```[a-z]*\s*\n([\s\S]*?)```/i);
+  if (m3 && m3[1].includes('<!DOCTYPE')) return m3[1].trim();
+  // Method 4: raw DOCTYPE to </html>
+  const m4 = text.match(/(<!DOCTYPE[\s\S]*?<\/html>)/i);
   if (m4) return m4[1].trim();
+  // Method 5: DOCTYPE to end of text (truncated)
+  const m5 = text.match(/(<!DOCTYPE[\s\S]*)/i);
+  if (m5 && m5[1].length > 200) {
+    let code = m5[1].trim();
+    if (!code.includes('</html>')) code += '\n</body></html>';
+    return code;
+  }
   return null;
 };
 
