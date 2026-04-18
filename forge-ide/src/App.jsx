@@ -116,6 +116,7 @@ export default function App() {
   const [previewHtml, setPreviewHtml] = useState(STARTER);
   const [previewKey, setPreviewKey] = useState(0);
   const [msgs, setMsgs] = useState([{role:"assistant",content:"Hey! I'm Forge ⚡\n\nI can build anything — games, apps, tools, dashboards.\n\nTap a quick prompt or type below!"}]);
+  const [activeProject, setActiveProject] = useState(null); // null = new chat
   const [input, setInput] = useState("");
   const [homeInput, setHomeInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -184,13 +185,20 @@ export default function App() {
     if (code) {
       setPreviewHtml(code);
       setPreviewKey(k=>k+1);
-      const newProject = {id:Date.now(),prompt,time:new Date().toLocaleTimeString(),tok,html:code};
-      setHistory(h=>[newProject,...h].slice(0,100));
-      // Save to user's profile (max 2 for free, unlimited for pro)
+      const currentMsgs = [...msgs.map(m=>({role:m.role,content:m.content,hasCode:m.hasCode,bullets:m.bullets})),
+        {role:"user",content:prompt},
+      ];
+      const newProject = {id:activeProject||Date.now(),prompt,time:new Date().toLocaleTimeString(),tok,html:code,bullets,msgs:currentMsgs};
+      setHistory(h=>{
+        const filtered = h.filter(p=>p.id!==newProject.id);
+        return [newProject,...filtered].slice(0,100);
+      });
+      setActiveProject(newProject.id);
+      // Save to user's profile
       if(!isAdmin && USER_STORE[currentUser]) {
         const userData = USER_STORE[currentUser];
-        const projects = userData.projects || [];
-        userData.projects = [newProject,...projects].slice(0, userData.isPro ? 1000 : FREE_PROJECT_LIMIT);
+        const existing = (userData.projects||[]).filter(p=>p.id!==newProject.id);
+        userData.projects = [newProject,...existing].slice(0, userData.isPro ? 1000 : FREE_PROJECT_LIMIT);
       }
       setMsgs(m=>[...m,{role:"assistant",content:`✅ Done! Built your ${label}.`,hasCode:true,bullets}]);
     } else {
@@ -260,9 +268,27 @@ Be concise and friendly.`;
     setHistory([]);
     setMsgs([{role:"assistant",content:"Hey! I'm Forge ⚡\n\nI can build anything — games, apps, tools, dashboards.\n\nTap a quick prompt or type below!"}]);
     setPreviewHtml(STARTER);
-    setPreviewKey(0);
+    setPreviewKey(k=>k+1);
     setBuildSteps([]);
     setCalls(0);
+    setActiveProject(null);
+  };
+
+  const openProject = (project) => {
+    // Restore the project's saved conversation
+    setActiveProject(project.id);
+    setPreviewHtml(project.html);
+    setPreviewKey(k=>k+1);
+    setBuildSteps([]);
+    // Restore saved messages if any, otherwise build a clean history for this project
+    const savedMsgs = project.msgs || [
+      {role:"assistant", content:"Hey! I'm Forge ⚡\n\nI can build anything — games, apps, tools, dashboards.\n\nTap a quick prompt or type below!"},
+      {role:"user", content:project.prompt},
+      {role:"assistant", content:`✅ Done! Built your ${project.prompt.replace(/^build (a |an )?/i,"").trim()}.`, hasCode:true, bullets:project.bullets||[]},
+    ];
+    setMsgs(savedMsgs);
+    setInput("");
+    setView("ide");
   };
 
   const checkAndSetPro = async (username) => {
@@ -665,7 +691,7 @@ Be concise and friendly.`;
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {userProjects.map((p,i)=>(
                   <div key={p.id}
-                    onClick={()=>{setPreviewHtml(p.html);setPreviewKey(k=>k+1);setView("ide");}}
+                    onClick={()=>openProject(p)}
                     style={{background:"#0d0d24",border:"1px solid #1e1e40",borderRadius:12,padding:"14px 18px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
                     <div style={{display:"flex",alignItems:"center",gap:12,flex:1,minWidth:0}}>
                       <div style={{width:36,height:36,borderRadius:8,background:"linear-gradient(135deg,#7c6dfa,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>⚡</div>
@@ -981,7 +1007,8 @@ Be concise and friendly.`;
           <span style={{fontWeight:900,fontSize:16,color:C.accent}}>FORGE</span>
         </button>
         <div style={{width:6,height:6,borderRadius:"50%",background:C.green,boxShadow:`0 0 4px ${C.green}`,marginLeft:2}}/>
-        <span style={{fontSize:10,color:C.muted}}>AI READY</span>
+        <span style={{fontSize:10,color:C.muted}}>{activeProject?"PROJECT OPEN":"AI READY"}</span>
+        {activeProject&&<button onClick={()=>{resetProgress();}} style={{background:C.accentDim,border:`1px solid ${C.accent}`,color:C.accent,padding:"3px 10px",fontFamily:"monospace",fontSize:9,cursor:"pointer",borderRadius:4,marginLeft:4}}>+ NEW CHAT</button>}
         <div style={{flex:1}}/>
         {!isAdmin&&(
           <div onClick={tokens>=FREE_CREDIT_LIMIT?()=>setShowUpgrade(true):undefined}
@@ -1003,6 +1030,18 @@ Be concise and friendly.`;
         <span style={{fontSize:10,color:C.muted}}>👤 {currentUser}</span>
         <button onClick={()=>setView("home")} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"5px 10px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:3}}>🏠</button>
         {isAdmin&&<button onClick={()=>setView("admin")} style={{background:C.accentDim,border:`1px solid ${C.accent}`,color:C.accent,padding:"5px 14px",fontFamily:"monospace",fontSize:10,cursor:"pointer",fontWeight:700,borderRadius:3}}>⚙ ADMIN</button>}
+        <button
+          onClick={()=>{
+            if(!previewHtml||previewHtml===STARTER){alert("Build something first!");return;}
+            const blob=new Blob([previewHtml],{type:"text/html"});
+            const url=URL.createObjectURL(blob);
+            const a=document.createElement("a");
+            a.href=url; a.download="my-forge-app.html"; a.click();
+            URL.revokeObjectURL(url);
+          }}
+          style={{background:previewHtml&&previewHtml!==STARTER?"linear-gradient(90deg,#22c55e,#16a34a)":"#111",border:`1px solid ${previewHtml&&previewHtml!==STARTER?"#22c55e":C.border}`,color:previewHtml&&previewHtml!==STARTER?"#fff":C.muted,padding:"6px 16px",fontFamily:"monospace",fontSize:11,fontWeight:900,cursor:previewHtml&&previewHtml!==STARTER?"pointer":"not-allowed",borderRadius:6,display:"flex",alignItems:"center",gap:5,letterSpacing:1}}>
+          <span>⬇</span> DOWNLOAD APP
+        </button>
         <button onClick={()=>{setAuthed(false);setCurrentUser("");setIsAdmin(false);}} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"5px 10px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:3}}>LOG OUT</button>
       </div>
 
@@ -1095,28 +1134,10 @@ Be concise and friendly.`;
                   placeholder="Describe what to build..." rows={2}
                   style={{width:"100%",boxSizing:"border-box",background:"transparent",border:"none",outline:"none",color:C.text,fontFamily:"monospace",fontSize:13,padding:"10px 12px",resize:"none",lineHeight:1.5,display:"block"}}/>
               </div>
-              <div style={{display:"flex",flexDirection:"column",gap:6,flexShrink:0}}>
-                <button onClick={send} disabled={loading||!input.trim()}
-                  style={{background:input.trim()&&!loading?C.accent:C.panel,border:`2px solid ${input.trim()&&!loading?C.accent:C.border}`,color:input.trim()&&!loading?"#fff":C.muted,padding:"10px 20px",fontFamily:"monospace",fontSize:14,fontWeight:900,cursor:loading||!input.trim()?"not-allowed":"pointer",letterSpacing:1,display:"flex",alignItems:"center",gap:6,borderRadius:8,transition:"all 0.15s",height:44,minWidth:100,justifyContent:"center"}}>
-                  {loading?<span style={{fontSize:18}}>⏳</span>:<><span style={{fontSize:16}}>⚡</span>BUILD</>}
-                </button>
-                <button
-                  onClick={()=>{
-                    if(!previewHtml||previewHtml===STARTER){alert("Build something first before deploying!");return;}
-                    // Create a downloadable HTML file
-                    const blob = new Blob([previewHtml],{type:"text/html"});
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = "my-forge-app.html";
-                    a.click();
-                    URL.revokeObjectURL(url);
-                  }}
-                  disabled={!previewHtml||previewHtml===STARTER}
-                  style={{background:previewHtml&&previewHtml!==STARTER?"#0a2a0a":"#0a0a14",border:`1px solid ${previewHtml&&previewHtml!==STARTER?C.green:C.border}`,color:previewHtml&&previewHtml!==STARTER?C.green:C.muted,padding:"0 12px",fontFamily:"monospace",fontSize:10,fontWeight:700,cursor:previewHtml&&previewHtml!==STARTER?"pointer":"not-allowed",display:"flex",alignItems:"center",gap:4,borderRadius:6,height:10,minWidth:100,justifyContent:"center",letterSpacing:1}}>
-                  <span>↓</span> DEPLOY
-                </button>
-              </div>
+              <button onClick={send} disabled={loading||!input.trim()}
+                style={{background:input.trim()&&!loading?C.accent:C.panel,border:`2px solid ${input.trim()&&!loading?C.accent:C.border}`,color:input.trim()&&!loading?"#fff":C.muted,padding:"10px 20px",fontFamily:"monospace",fontSize:14,fontWeight:900,cursor:loading||!input.trim()?"not-allowed":"pointer",letterSpacing:1,display:"flex",alignItems:"center",gap:6,borderRadius:8,transition:"all 0.15s",flexShrink:0,height:58}}>
+                {loading?<span style={{fontSize:18}}>⏳</span>:<><span style={{fontSize:18}}>⚡</span>SEND</>}
+              </button>
             </div>
           </div>
         </div>
