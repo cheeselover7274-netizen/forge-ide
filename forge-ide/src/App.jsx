@@ -246,9 +246,18 @@ Be concise and friendly.`;
   const handleAdminKey = (e)=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendAdmin();} };
   const handleHomeKey = (e)=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();startBuilding(homeInput);} };
 
+  const resetProgress = () => {
+    setHistory([]);
+    setMsgs([{role:"assistant",content:"Hey! I'm Forge ⚡\n\nI can build anything — games, apps, tools, dashboards.\n\nTap a quick prompt or type below!"}]);
+    setPreviewHtml(STARTER);
+    setPreviewKey(0);
+    setBuildSteps([]);
+    setCalls(0);
+  };
+
   const login = () => {
-    if(lu===ADMIN_USER&&lp===ADMIN_PASS){ setAuthed(true);setIsAdmin(true);setCurrentUser("Admin");setLe(""); return; }
-    if(USER_STORE[lu]&&USER_STORE[lu]===lp){ setAuthed(true);setIsAdmin(false);setCurrentUser(lu);setLe(""); return; }
+    if(lu===ADMIN_USER&&lp===ADMIN_PASS){ resetProgress(); setAuthed(true);setIsAdmin(true);setCurrentUser("Admin");setLe(""); return; }
+    if(USER_STORE[lu]&&USER_STORE[lu]===lp){ resetProgress(); setAuthed(true);setIsAdmin(false);setCurrentUser(lu);setLe(""); return; }
     setLe("Invalid username or password");
   };
 
@@ -365,7 +374,7 @@ Be concise and friendly.`;
         {isAdmin&&<span style={{fontSize:9,color:"#4ade80",background:"#0a1a0a",border:"1px solid #4ade80",padding:"3px 8px",borderRadius:3,marginRight:10}}>∞ ADMIN</span>}
         <span style={{fontSize:10,color:"#5050a0",marginRight:12}}>👤 {currentUser}</span>
         <button onClick={()=>setView("ide")} style={{background:"#7c6dfa20",border:"1px solid #7c6dfa",color:"#7c6dfa",padding:"6px 16px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:6,marginRight:8}}>Open IDE</button>
-        <button onClick={()=>setView("admin")} style={{background:"transparent",border:"1px solid #2a2a4a",color:"#6060a0",padding:"6px 14px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:6,marginRight:8}}>⚙ Admin</button>
+        {isAdmin&&<button onClick={()=>setView("admin")} style={{background:"transparent",border:"1px solid #2a2a4a",color:"#6060a0",padding:"6px 14px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:6,marginRight:8}}>⚙ Admin</button>}
         <button onClick={()=>{setAuthed(false);setCurrentUser("");setIsAdmin(false);}} style={{background:"transparent",border:"1px solid #2a2a4a",color:"#6060a0",padding:"6px 12px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:6}}>Log out</button>
       </div>
       <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 20px",textAlign:"center"}}>
@@ -572,7 +581,7 @@ Be concise and friendly.`;
         )}
         <span style={{fontSize:10,color:C.muted}}>👤 {currentUser}</span>
         <button onClick={()=>setView("home")} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"5px 10px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:3}}>🏠</button>
-        <button onClick={()=>setView("admin")} style={{background:C.accentDim,border:`1px solid ${C.accent}`,color:C.accent,padding:"5px 14px",fontFamily:"monospace",fontSize:10,cursor:"pointer",fontWeight:700,borderRadius:3}}>⚙ ADMIN</button>
+        {isAdmin&&<button onClick={()=>setView("admin")} style={{background:C.accentDim,border:`1px solid ${C.accent}`,color:C.accent,padding:"5px 14px",fontFamily:"monospace",fontSize:10,cursor:"pointer",fontWeight:700,borderRadius:3}}>⚙ ADMIN</button>}
         <button onClick={()=>{setAuthed(false);setCurrentUser("");setIsAdmin(false);}} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"5px 10px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:3}}>LOG OUT</button>
       </div>
 
