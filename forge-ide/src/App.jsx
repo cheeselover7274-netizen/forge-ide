@@ -5,7 +5,9 @@ const ADMIN_PASS = "forge2024";
 const MODEL = "claude-sonnet-4-6";
 const FREE_CREDIT_LIMIT = 4000;
 const PRO_PRICE = "$12.99/mo";
+// USER_STORE: { username: { pass, email, projects: [], isPro: false } }
 const USER_STORE = {};
+const FREE_PROJECT_LIMIT = 2;
 
 const FORGE_SYSTEM = `You are Forge, a world-class AI software engineer. Build ANYTHING the user asks for.
 
@@ -105,6 +107,7 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentUser, setCurrentUser] = useState("");
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [isPro, setIsPro] = useState(false);
   const [authPage, setAuthPage] = useState("");
   const [lu, setLu] = useState(""); const [lp, setLp] = useState(""); const [le, setLe] = useState("");
   const [su, setSu] = useState(""); const [se, setSe] = useState(""); const [sp, setSp] = useState(""); const [sp2, setSp2] = useState(""); const [sErr, setSErr] = useState(""); const [sOk, setSOk] = useState("");
@@ -181,7 +184,14 @@ export default function App() {
     if (code) {
       setPreviewHtml(code);
       setPreviewKey(k=>k+1);
-      setHistory(h=>[{id:Date.now(),prompt,time:new Date().toLocaleTimeString(),tok},...h].slice(0,100));
+      const newProject = {id:Date.now(),prompt,time:new Date().toLocaleTimeString(),tok,html:code};
+      setHistory(h=>[newProject,...h].slice(0,100));
+      // Save to user's profile (max 2 for free, unlimited for pro)
+      if(!isAdmin && USER_STORE[currentUser]) {
+        const userData = USER_STORE[currentUser];
+        const projects = userData.projects || [];
+        userData.projects = [newProject,...projects].slice(0, userData.isPro ? 1000 : FREE_PROJECT_LIMIT);
+      }
       setMsgs(m=>[...m,{role:"assistant",content:`✅ Done! Built your ${label}.`,hasCode:true,bullets}]);
     } else {
       setMsgs(m=>[...m,{role:"assistant",content:`⚠️ No code returned. The AI may have responded without HTML. Try again!`,hasCode:false,bullets:[]}]);
@@ -257,7 +267,7 @@ Be concise and friendly.`;
 
   const login = () => {
     if(lu===ADMIN_USER&&lp===ADMIN_PASS){ resetProgress(); setAuthed(true);setIsAdmin(true);setCurrentUser("Admin");setLe(""); return; }
-    if(USER_STORE[lu]&&USER_STORE[lu]===lp){ resetProgress(); setAuthed(true);setIsAdmin(false);setCurrentUser(lu);setLe(""); return; }
+    if(USER_STORE[lu]&&USER_STORE[lu].pass===lp){ resetProgress(); setAuthed(true);setIsAdmin(false);setCurrentUser(lu);setLe(""); return; }
     setLe("Invalid username or password");
   };
 
@@ -267,7 +277,7 @@ Be concise and friendly.`;
     if(sp!==sp2){ setSErr("Passwords don't match"); return; }
     if(sp.length<6){ setSErr("Password must be 6+ characters"); return; }
     if(su===ADMIN_USER||USER_STORE[su]){ setSErr("Username taken"); return; }
-    USER_STORE[su]=sp;
+    USER_STORE[su] = { pass:sp, email:se, projects:[], isPro:false };
     setSOk("Account created! Sign in now.");
     setAuthPage("signin"); setLu(su); setLp("");
   };
@@ -397,14 +407,17 @@ Be concise and friendly.`;
   );
 
   // ── UPGRADE MODAL ──────────────────────────────────────────────
+  // Stripe payment page
+  const goToPayment = () => {
+    setShowUpgrade(false);
+    setView("payment");
+  };
+
   const UpgradeModal = () => showUpgrade && (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,fontFamily:"monospace"}}>
       <div style={{background:C.panel,border:`2px solid ${C.accent}`,borderRadius:16,padding:40,maxWidth:400,width:"90%",textAlign:"center",boxShadow:`0 0 60px ${C.accent}40`}}>
         <div style={{fontSize:48,marginBottom:8}}>🚫</div>
         <div style={{fontSize:24,fontWeight:900,color:C.red,marginBottom:8}}>You ran out of tokens!</div>
-        <div style={{fontSize:13,color:C.muted,marginBottom:8,lineHeight:1.7}}>
-          You've used all <strong style={{color:C.text}}>{FREE_CREDIT_LIMIT.toLocaleString()} free tokens</strong>.
-        </div>
         <div style={{fontSize:13,color:C.muted,marginBottom:28,lineHeight:1.7}}>
           Upgrade to <strong style={{color:C.accent}}>Forge Pro</strong> to keep building — unlimited tokens, forever.
         </div>
@@ -414,25 +427,79 @@ Be concise and friendly.`;
           <div style={{fontSize:40,fontWeight:900,color:C.accent,marginBottom:4}}>{PRO_PRICE}</div>
           <div style={{fontSize:11,color:C.muted,marginBottom:16}}>billed monthly · cancel anytime</div>
           <div style={{display:"flex",flexDirection:"column",gap:8,textAlign:"left"}}>
-            {[
-              ["∞","Unlimited tokens — build forever"],
-              ["⚡","All app types, games & tools"],
-              ["🚀","Priority AI generation"],
-              ["📋","Full build history"],
-              ["🎨","Live theme customisation"],
-            ].map(([icon,feat])=>(
+            {[["∞","Unlimited tokens — build forever"],["⚡","All app types, games & tools"],["🚀","Priority AI generation"],["📋","Full build history — unlimited projects"],["🎨","Live theme customisation"]].map(([icon,feat])=>(
               <div key={feat} style={{fontSize:12,color:C.text,display:"flex",gap:8,alignItems:"center"}}>
                 <span style={{color:C.green,fontSize:14}}>{icon}</span><span>{feat}</span>
               </div>
             ))}
           </div>
         </div>
-        <button style={{width:"100%",background:`linear-gradient(90deg,${C.accent},#a855f7)`,border:"none",color:"#fff",padding:"15px 0",fontFamily:"monospace",fontSize:16,fontWeight:900,cursor:"pointer",borderRadius:8,letterSpacing:2,marginBottom:10,boxShadow:`0 4px 20px ${C.accent}60`}}>
-          UPGRADE TO PRO →
+        <button onClick={goToPayment} style={{width:"100%",background:`linear-gradient(90deg,${C.accent},#a855f7)`,border:"none",color:"#fff",padding:"15px 0",fontFamily:"monospace",fontSize:16,fontWeight:900,cursor:"pointer",borderRadius:8,letterSpacing:2,marginBottom:10,boxShadow:`0 4px 20px ${C.accent}60`}}>
+          UPGRADE TO PRO — {PRO_PRICE} →
         </button>
         <button onClick={()=>setShowUpgrade(false)} style={{width:"100%",background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"10px 0",fontFamily:"monospace",fontSize:12,cursor:"pointer",borderRadius:6}}>
           Maybe later
         </button>
+      </div>
+    </div>
+  );
+
+
+  // ── PAYMENT PAGE ──────────────────────────────────────────────
+  if(view==="payment") return (
+    <div style={{minHeight:"100vh",background:"#06061a",fontFamily:"monospace",color:"#e0e0ff",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div style={{maxWidth:480,width:"100%"}}>
+        <button onClick={()=>setView(authed?"home":"home")} style={{background:"transparent",border:"none",color:"#5050a0",fontSize:13,cursor:"pointer",marginBottom:24,display:"flex",alignItems:"center",gap:6,padding:0}}>← Back</button>
+
+        <div style={{textAlign:"center",marginBottom:32}}>
+          <div style={{fontSize:40,marginBottom:10}}>⚡</div>
+          <div style={{fontSize:26,fontWeight:900,background:"linear-gradient(90deg,#7c6dfa,#a855f7)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:6}}>Upgrade to Forge Pro</div>
+          <div style={{fontSize:13,color:"#5050a0"}}>Unlock unlimited builds · Cancel anytime</div>
+        </div>
+
+        {/* Plan card */}
+        <div style={{background:"linear-gradient(135deg,#0d0d24,#1a0a2e)",border:"2px solid #7c6dfa",borderRadius:16,padding:28,marginBottom:24,position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",top:0,right:0,background:"linear-gradient(90deg,#7c6dfa,#a855f7)",color:"#fff",fontSize:9,fontWeight:900,padding:"6px 14px",borderRadius:"0 0 0 10px",letterSpacing:2}}>BEST VALUE</div>
+          <div style={{fontSize:13,color:"#6060a0",letterSpacing:3,marginBottom:10}}>FORGE PRO</div>
+          <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:4}}>
+            <span style={{fontSize:48,fontWeight:900,color:"#7c6dfa"}}>$12.99</span>
+            <span style={{fontSize:13,color:"#5050a0"}}>/month</span>
+          </div>
+          <div style={{fontSize:11,color:"#3a3a6a",marginBottom:20}}>Billed monthly — cancel anytime from your account</div>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {[["∞","Unlimited tokens forever"],["💾","Unlimited saved projects"],["⚡","All games, apps & tools"],["🚀","Priority Claude 4.6 generation"],["🎨","Live theme customisation"],["📋","Full build history"],["🛟","Priority support"]].map(([icon,feat])=>(
+              <div key={feat} style={{display:"flex",alignItems:"center",gap:10,fontSize:13,color:"#c8c8ff"}}>
+                <span style={{color:"#4ade80",fontSize:15}}>{icon}</span>{feat}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Payment form placeholder */}
+        <div style={{background:"#0d0d24",border:"1px solid #2a2a4a",borderRadius:12,padding:24,marginBottom:16}}>
+          <div style={{fontSize:11,color:"#4040a0",letterSpacing:3,marginBottom:16}}>PAYMENT DETAILS</div>
+          <div style={{fontSize:12,color:"#4040a0",marginBottom:16,padding:"12px",background:"#7c6dfa10",border:"1px solid #7c6dfa30",borderRadius:8,lineHeight:1.7}}>
+            💳 To enable real payments, add your <strong style={{color:"#7c6dfa"}}>Stripe Payment Link</strong> in the admin panel.<br/>
+            Your Stripe link will appear here as a secure checkout button.
+          </div>
+          {[["Card Number","1234 5678 9012 3456"],["Expiry","MM / YY"],["CVC","•••"]].map(([label,ph])=>(
+            <div key={label} style={{marginBottom:14}}>
+              <div style={{fontSize:10,color:"#5050a0",marginBottom:5,letterSpacing:2}}>{label}</div>
+              <input placeholder={ph} style={{width:"100%",boxSizing:"border-box",background:"#0a0a1a",border:"1px solid #2a2a4a",color:"#c8c8e0",padding:"11px 13px",fontFamily:"monospace",fontSize:14,outline:"none",borderRadius:6}}/>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={()=>{
+            // In production: redirect to your Stripe payment link
+            // window.location.href = "https://buy.stripe.com/YOUR_LINK";
+            alert("To enable payments: go to Admin → Settings and add your Stripe Payment Link.");
+          }}
+          style={{width:"100%",background:"linear-gradient(90deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:"16px 0",fontFamily:"monospace",fontSize:16,fontWeight:900,cursor:"pointer",borderRadius:10,letterSpacing:2,boxShadow:"0 4px 30px #7c6dfa40",marginBottom:12}}>
+          PAY $12.99/MONTH →
+        </button>
+        <div style={{textAlign:"center",fontSize:10,color:"#2a2a4a"}}>🔒 Secure payment · Cancel anytime · No hidden fees</div>
       </div>
     </div>
   );
@@ -498,7 +565,7 @@ Be concise and friendly.`;
         </div>
 
         {/* Example chips */}
-        <div style={{display:"flex",flexWrap:"wrap",gap:8,justifyContent:"center",maxWidth:620,marginBottom:60}}>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8,justifyContent:"center",maxWidth:620,marginBottom:48}}>
           {EXAMPLES.map(p=>(
             <button key={p} onClick={()=>startBuilding(p)}
               style={{background:"#0d0d24",border:"1px solid #1e1e40",color:"#6060a0",padding:"7px 16px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:20,transition:"all 0.15s"}}>
@@ -506,6 +573,38 @@ Be concise and friendly.`;
             </button>
           ))}
         </div>
+
+        {/* Saved projects */}
+        {!isAdmin && (() => {
+          const userProjects = USER_STORE[currentUser]?.projects || [];
+          const userIsPro = USER_STORE[currentUser]?.isPro || false;
+          return userProjects.length > 0 ? (
+            <div style={{width:"100%",maxWidth:700,marginBottom:40}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+                <div style={{fontSize:13,color:"#6060a0",letterSpacing:2}}>YOUR PROJECTS</div>
+                {!userIsPro&&<div style={{fontSize:10,color:"#5050a0",background:"#7c6dfa15",border:"1px solid #7c6dfa30",padding:"3px 10px",borderRadius:10}}>{userProjects.length}/{FREE_PROJECT_LIMIT} free slots used</div>}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:12}}>
+                {userProjects.map((p,i)=>(
+                  <div key={p.id} onClick={()=>{setPreviewHtml(p.html);setPreviewKey(k=>k+1);setView("ide");}}
+                    style={{background:"#0d0d24",border:"1px solid #1e1e40",borderRadius:12,padding:16,cursor:"pointer",transition:"all 0.2s",position:"relative",overflow:"hidden"}}>
+                    <div style={{fontSize:10,color:"#4ade80",marginBottom:6}}>⚡ PROJECT</div>
+                    <div style={{fontSize:12,color:"#c8c8ff",fontWeight:700,marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.prompt}</div>
+                    <div style={{fontSize:10,color:"#3a3a6a"}}>{p.time}</div>
+                  </div>
+                ))}
+                {!userIsPro && userProjects.length >= FREE_PROJECT_LIMIT && (
+                  <div onClick={()=>setView("payment")}
+                    style={{background:"linear-gradient(135deg,#1a0a2e,#0d0d24)",border:"1.5px dashed #7c6dfa50",borderRadius:12,padding:16,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:88,textAlign:"center"}}>
+                    <div style={{fontSize:20,marginBottom:6}}>🔒</div>
+                    <div style={{fontSize:11,color:"#7c6dfa",fontWeight:700}}>Upgrade to Pro</div>
+                    <div style={{fontSize:10,color:"#3a3a6a",marginTop:2}}>Save unlimited projects</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : null;
+        })()}
 
         {/* Features grid */}
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,maxWidth:700,width:"100%",marginBottom:48}}>
@@ -554,7 +653,7 @@ Be concise and friendly.`;
       </div>
       <div style={{flex:1,display:"flex",overflow:"hidden"}}>
         <div style={{width:200,background:C.sidebar,borderRight:`1px solid ${C.border}`,padding:"14px 10px",flexShrink:0}}>
-          {[{id:"dashboard",label:"📊 Dashboard"},{id:"claude",label:"🤖 Live AI",badge:true},{id:"history",label:"📋 History"},{id:"settings",label:"⚙️ Settings"}].map(t=>(
+          {[{id:"dashboard",label:"📊 Dashboard"},{id:"claude",label:"🤖 Live AI",badge:true},{id:"users",label:"👥 Users"},{id:"history",label:"📋 History"},{id:"settings",label:"⚙️ Settings"}].map(t=>(
             <div key={t.id} onClick={()=>setAdminTab(t.id)} style={{padding:"9px 12px",marginBottom:4,cursor:"pointer",borderRadius:4,background:adminTab===t.id?C.accentDim:"transparent",border:`1px solid ${adminTab===t.id?C.accent:"transparent"}`,color:adminTab===t.id?C.accent:C.muted,fontSize:12,display:"flex",alignItems:"center",gap:8}}>
               {t.label}{t.badge&&<span style={{marginLeft:"auto",width:7,height:7,borderRadius:"50%",background:C.green,boxShadow:`0 0 4px ${C.green}`}}/>}
             </div>
@@ -639,6 +738,99 @@ Be concise and friendly.`;
               </div>
             </div>
           )}
+          {adminTab==="users"&&(
+            <div style={{flex:1,overflowY:"auto",padding:"22px 26px"}}>
+              <div style={{fontSize:20,fontWeight:900,color:C.accent,marginBottom:6}}>Registered Users</div>
+              <div style={{fontSize:11,color:C.muted,marginBottom:20}}>Account recovery info — keep this private</div>
+              {Object.keys(USER_STORE).length===0?(
+                <div style={{color:C.muted,background:C.panel,border:`1px solid ${C.border}`,padding:20,borderRadius:8}}>No users have signed up yet.</div>
+              ):(
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {Object.entries(USER_STORE).map(([username,data])=>(
+                    <div key={username} style={{background:C.panel,border:`1px solid ${C.border}`,borderRadius:8,padding:"14px 16px"}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <div style={{width:32,height:32,borderRadius:"50%",background:C.accentDim,border:`1px solid ${C.accent}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>👤</div>
+                          <div>
+                            <div style={{fontSize:13,fontWeight:700,color:C.text}}>{username}</div>
+                            <div style={{fontSize:10,color:data.isPro?C.green:C.muted}}>{data.isPro?"⭐ PRO":"Free plan"}</div>
+                          </div>
+                        </div>
+                        <div style={{display:"flex",gap:6}}>
+                          <button
+                            onClick={()=>{
+                              if(USER_STORE[username]) USER_STORE[username].isPro = !USER_STORE[username].isPro;
+                              // Force re-render
+                              setCalls(c=>c);
+                            }}
+                            style={{background:data.isPro?C.panel:C.accentDim,border:`1px solid ${data.isPro?C.border:C.accent}`,color:data.isPro?C.muted:C.accent,padding:"4px 10px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:4}}>
+                            {data.isPro?"Revoke Pro":"Grant Pro"}
+                          </button>
+                        </div>
+                      </div>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,fontSize:11}}>
+                        <div style={{background:C.bg,border:`1px solid ${C.border}`,padding:"8px 10px",borderRadius:6}}>
+                          <div style={{color:C.muted,marginBottom:2,fontSize:9,letterSpacing:1}}>EMAIL</div>
+                          <div style={{color:C.text}}>{data.email || "—"}</div>
+                        </div>
+                        <div style={{background:C.bg,border:`1px solid ${C.border}`,padding:"8px 10px",borderRadius:6}}>
+                          <div style={{color:C.muted,marginBottom:2,fontSize:9,letterSpacing:1}}>PASSWORD</div>
+                          <div style={{color:C.text,fontFamily:"monospace"}}>{data.pass}</div>
+                        </div>
+                        <div style={{background:C.bg,border:`1px solid ${C.border}`,padding:"8px 10px",borderRadius:6}}>
+                          <div style={{color:C.muted,marginBottom:2,fontSize:9,letterSpacing:1}}>PROJECTS</div>
+                          <div style={{color:C.text}}>{(data.projects||[]).length} saved</div>
+                        </div>
+                        <div style={{background:C.bg,border:`1px solid ${C.border}`,padding:"8px 10px",borderRadius:6}}>
+                          <div style={{color:C.muted,marginBottom:2,fontSize:9,letterSpacing:1}}>STATUS</div>
+                          <div style={{color:data.isPro?C.green:C.muted}}>{data.isPro?"Active Pro":"Free"}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {adminTab==="users"&&(
+            <div style={{flex:1,overflowY:"auto",padding:"22px 26px"}}>
+              <div style={{fontSize:20,fontWeight:900,color:C.accent,marginBottom:6}}>Registered Users</div>
+              <div style={{fontSize:11,color:C.muted,marginBottom:20}}>Account recovery info — keep private</div>
+              {Object.keys(USER_STORE).length===0?(
+                <div style={{color:C.muted,background:C.panel,border:`1px solid ${C.border}`,padding:20,borderRadius:8}}>No users signed up yet.</div>
+              ):(
+                <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                  {Object.entries(USER_STORE).map(([username,data])=>(
+                    <div key={username} style={{background:C.panel,border:`1px solid ${C.border}`,borderRadius:8,padding:"14px 16px"}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <div style={{width:32,height:32,borderRadius:"50%",background:C.accentDim,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>👤</div>
+                          <div>
+                            <div style={{fontSize:13,fontWeight:700,color:C.text}}>{username}</div>
+                            <div style={{fontSize:10,color:data.isPro?C.green:C.muted}}>{data.isPro?"⭐ PRO":"Free plan"}</div>
+                          </div>
+                        </div>
+                        <button onClick={()=>{ if(USER_STORE[username]) USER_STORE[username].isPro=!USER_STORE[username].isPro; setCalls(c=>c+0.001); }}
+                          style={{background:data.isPro?C.panel:C.accentDim,border:`1px solid ${data.isPro?C.border:C.accent}`,color:data.isPro?C.muted:C.accent,padding:"4px 10px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:4}}>
+                          {data.isPro?"Revoke Pro":"Grant Pro"}
+                        </button>
+                      </div>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                        {[["EMAIL",data.email||"—"],["PASSWORD",data.pass],["PROJECTS",`${(data.projects||[]).length} saved`],["PLAN",data.isPro?"✅ Pro":"Free"]].map(([k,v])=>(
+                          <div key={k} style={{background:C.bg,border:`1px solid ${C.border}`,padding:"8px 10px",borderRadius:6}}>
+                            <div style={{fontSize:9,color:C.muted,letterSpacing:1,marginBottom:2}}>{k}</div>
+                            <div style={{fontSize:12,color:C.text,fontFamily:"monospace",wordBreak:"break-all"}}>{v}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {adminTab==="history"&&(
             <div style={{flex:1,overflowY:"auto",padding:"22px 26px"}}>
               <div style={{fontSize:20,fontWeight:900,color:C.accent,marginBottom:20}}>Build History</div>
@@ -661,6 +853,24 @@ Be concise and friendly.`;
                     <span style={{fontSize:13,color:C.accent}}>{v}</span>
                   </div>
                 ))}
+              </div>
+              <div style={{background:C.panel,border:`1px solid ${C.border}`,padding:20,borderRadius:8,marginBottom:16}}>
+                <div style={{fontSize:11,color:C.muted,letterSpacing:3,marginBottom:12}}>STRIPE PAYMENT LINK</div>
+                <div style={{fontSize:11,color:C.muted,marginBottom:10,lineHeight:1.7}}>
+                  1. Go to <span style={{color:C.accent}}>dashboard.stripe.com</span><br/>
+                  2. Create a Payment Link for $12.99/month<br/>
+                  3. Paste the link below — it will appear on the upgrade page
+                </div>
+                <input
+                  placeholder="https://buy.stripe.com/your_link"
+                  onChange={e=>{
+                    // Store in localStorage for persistence
+                    localStorage.setItem('forge_stripe_link', e.target.value);
+                  }}
+                  defaultValue={typeof localStorage !== 'undefined' ? localStorage.getItem('forge_stripe_link')||'' : ''}
+                  style={{width:"100%",boxSizing:"border-box",background:C.bg,border:`1px solid ${C.border}`,color:C.text,padding:"10px 12px",fontFamily:"monospace",fontSize:12,outline:"none",borderRadius:6,marginBottom:8}}
+                />
+                <div style={{fontSize:10,color:C.muted}}>Once added, the Pay button on the upgrade page will redirect users to Stripe.</div>
               </div>
               <div style={{background:C.panel,border:`1px solid ${C.border}`,padding:20,borderRadius:8}}>
                 <div style={{fontSize:11,color:C.muted,letterSpacing:3,marginBottom:12}}>RESET THEME</div>
