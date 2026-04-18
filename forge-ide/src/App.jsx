@@ -500,10 +500,7 @@ Be concise and friendly.`;
         {/* Payment form placeholder */}
         <div style={{background:"#0d0d24",border:"1px solid #2a2a4a",borderRadius:12,padding:24,marginBottom:16}}>
           <div style={{fontSize:11,color:"#4040a0",letterSpacing:3,marginBottom:16}}>PAYMENT DETAILS</div>
-          <div style={{fontSize:12,color:"#4040a0",marginBottom:16,padding:"12px",background:"#7c6dfa10",border:"1px solid #7c6dfa30",borderRadius:8,lineHeight:1.7}}>
-            💳 To enable real payments, add your <strong style={{color:"#7c6dfa"}}>Stripe Payment Link</strong> in the admin panel.<br/>
-            Your Stripe link will appear here as a secure checkout button.
-          </div>
+
           {[["Card Number","1234 5678 9012 3456"],["Expiry","MM / YY"],["CVC","•••"]].map(([label,ph])=>(
             <div key={label} style={{marginBottom:14}}>
               <div style={{fontSize:10,color:"#5050a0",marginBottom:5,letterSpacing:2}}>{label}</div>
