@@ -265,9 +265,31 @@ Be concise and friendly.`;
     setCalls(0);
   };
 
+  const checkAndSetPro = async (username) => {
+    const userData = USER_STORE[username];
+    if (!userData?.email) return;
+    try {
+      const r = await fetch("/api/check-pro", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ email: userData.email })
+      });
+      const data = await r.json();
+      if (data.isPro && !userData.isPro) {
+        userData.isPro = true;
+        setIsPro(true);
+        console.log("✅ Pro status confirmed via Stripe!");
+      }
+    } catch(e) { /* silent fail */ }
+  };
+
   const login = () => {
     if(lu===ADMIN_USER&&lp===ADMIN_PASS){ resetProgress(); setAuthed(true);setIsAdmin(true);setCurrentUser("Admin");setLe(""); return; }
-    if(USER_STORE[lu]&&USER_STORE[lu].pass===lp){ resetProgress(); setAuthed(true);setIsAdmin(false);setCurrentUser(lu);setLe(""); return; }
+    if(USER_STORE[lu]&&USER_STORE[lu].pass===lp){
+      resetProgress(); setAuthed(true);setIsAdmin(false);setCurrentUser(lu);setLe("");
+      // Auto-check Stripe for Pro status
+      setTimeout(()=>checkAndSetPro(lu), 500);
+      return;
+    }
     setLe("Invalid username or password");
   };
 
@@ -492,13 +514,22 @@ Be concise and friendly.`;
 
         <button
           onClick={()=>{
-            // In production: redirect to your Stripe payment link
-            // window.location.href = "https://buy.stripe.com/YOUR_LINK";
-            alert("To enable payments: go to Admin → Settings and add your Stripe Payment Link.");
+            const stripeLink = localStorage.getItem('forge_stripe_link');
+            if (stripeLink && stripeLink.startsWith('http')) {
+              // Pass user email to Stripe for automatic Pro grant
+              const email = USER_STORE[currentUser]?.email || "";
+              const url = email ? `${stripeLink}?prefilled_email=${encodeURIComponent(email)}` : stripeLink;
+              window.open(url, "_blank");
+            } else {
+              alert("Payments not yet configured. Ask the admin to add a Stripe Payment Link in Admin → Settings.");
+            }
           }}
           style={{width:"100%",background:"linear-gradient(90deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:"16px 0",fontFamily:"monospace",fontSize:16,fontWeight:900,cursor:"pointer",borderRadius:10,letterSpacing:2,boxShadow:"0 4px 30px #7c6dfa40",marginBottom:12}}>
           PAY $12.99/MONTH →
         </button>
+        <div style={{textAlign:"center",fontSize:11,color:"#3a3a6a",marginBottom:8}}>
+          After paying, sign out and back in — your Pro status will activate automatically ✅
+        </div>
         <div style={{textAlign:"center",fontSize:10,color:"#2a2a4a"}}>🔒 Secure payment · Cancel anytime · No hidden fees</div>
       </div>
     </div>
