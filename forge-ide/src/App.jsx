@@ -99,6 +99,7 @@ const DEFAULT_THEME = {
 };
 
 const QUICK = ["Snake game","Tetris","Todo app","Calculator","Tic tac toe","Pomodoro timer","Kanban board","Landing page"];
+const CLAUDE_MODEL = "claude-opus-4-6"; // Opus for the chatbot
 const AQUICK = ["Change theme to dark","Change theme to purple","Make it green","Reset to light blue","Review current build"];
 const EXAMPLES = ["Build a snake game with neon visuals","Create a todo app with drag and drop","Make a Tetris clone","Build a pomodoro timer","Create a music visualizer","Make a pixel art editor"];
 
@@ -112,6 +113,9 @@ export default function App() {
   const [lu, setLu] = useState(""); const [lp, setLp] = useState(""); const [le, setLe] = useState("");
   const [su, setSu] = useState(""); const [se, setSe] = useState(""); const [sp, setSp] = useState(""); const [sp2, setSp2] = useState(""); const [sErr, setSErr] = useState(""); const [sOk, setSOk] = useState("");
   const [view, setView] = useState("home");
+  const [claudeChat, setClaudeChat] = useState([{role:"assistant",content:"Hi! I'm Claude Opus 4.7, your AI assistant. I'm here to help with anything — coding questions, ideas, debugging, or just chatting.\n\nWhat can I help you with?"}]);
+  const [claudeInput, setClaudeInput] = useState("");
+  const [claudeLoading, setClaudeLoading] = useState(false);
   const [adminTab, setAdminTab] = useState("dashboard");
   const [previewHtml, setPreviewHtml] = useState(STARTER);
   const [previewKey, setPreviewKey] = useState(0);
@@ -218,7 +222,7 @@ export default function App() {
   const send = async () => {
     const p = input.trim();
     if(!p||loading) return;
-    if(!isAdmin && tokens >= FREE_CREDIT_LIMIT) { setShowUpgrade(true); return; }
+    if(!isAdmin && !isPro && tokens >= FREE_CREDIT_LIMIT) { setShowUpgrade(true); return; }
     setInput("");
     setMsgs(m=>[...m,{role:"user",content:p}]);
     setLoading(true);
@@ -260,6 +264,27 @@ Be concise and friendly.`;
     setTimeout(()=>adminRef.current?.focus(),100);
   };
 
+  const sendClaude = async () => {
+    const p = claudeInput.trim();
+    if(!p||claudeLoading) return;
+    setClaudeInput("");
+    setClaudeChat(m=>[...m,{role:"user",content:p}]);
+    setClaudeLoading(true);
+    try {
+      const r = await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:4096,
+          system:"You are Claude Opus 4.7, a helpful AI assistant inside Forge IDE. Be friendly, concise and helpful. You can help with coding, ideas, debugging, and general questions.",
+          messages:[...claudeChat.map(m=>({role:m.role,content:m.content})),{role:"user",content:p}]
+        })
+      });
+      const data = await r.json();
+      const reply = data.content?.filter(b=>b.type==="text").map(b=>b.text||"").join("")||"Sorry, I couldn't respond.";
+      setClaudeChat(m=>[...m,{role:"assistant",content:reply}]);
+    } catch(e){ setClaudeChat(m=>[...m,{role:"assistant",content:`⚠️ Error: ${e.message}`}]); }
+    setClaudeLoading(false);
+  };
+
+  const handleClaudeKey = (e)=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendClaude();} };
   const handleKey = (e)=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();} };
   const handleAdminKey = (e)=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendAdmin();} };
   const handleHomeKey = (e)=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();startBuilding(homeInput);} };
@@ -997,6 +1022,65 @@ Be concise and friendly.`;
     </div>
   );
 
+  // ── CLAUDE AI CHAT ─────────────────────────────────────────────
+  if(view==="claude") return (
+    <div style={{height:"100vh",background:C.bg,fontFamily:"monospace",color:C.text,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      {/* TOP BAR */}
+      <div style={{height:52,background:"linear-gradient(90deg,#0a0a1a,#1a0a2e)",borderBottom:"1px solid #3a2a6a",display:"flex",alignItems:"center",padding:"0 18px",gap:12,flexShrink:0}}>
+        <div style={{width:36,height:36,borderRadius:"50%",background:"radial-gradient(circle,#a855f7,#7c6dfa)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🤖</div>
+        <div>
+          <div style={{fontWeight:900,fontSize:14,color:"#e0e0ff"}}>Claude Opus 4.7</div>
+          <div style={{fontSize:9,color:"#5050a0",letterSpacing:2}}>PRO AI ASSISTANT</div>
+        </div>
+        <div style={{width:8,height:8,borderRadius:"50%",background:"#4ade80",boxShadow:"0 0 6px #4ade80",marginLeft:4}}/>
+        <div style={{flex:1}}/>
+        <button onClick={()=>setView("ide")} style={{background:"#7c6dfa20",border:"1px solid #7c6dfa",color:"#7c6dfa",padding:"6px 16px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:6,marginRight:8}}>← Back to IDE</button>
+        <button onClick={()=>setView("home")} style={{background:"transparent",border:"1px solid #2a2a4a",color:"#5050a0",padding:"6px 12px",fontFamily:"monospace",fontSize:11,cursor:"pointer",borderRadius:6}}>🏠</button>
+      </div>
+
+      {/* CHAT */}
+      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:"linear-gradient(180deg,#06061a,#0e0830)"}}>
+        <div style={{flex:1,overflowY:"auto",padding:"20px 20px",display:"flex",flexDirection:"column",gap:16}}>
+          {claudeChat.map((msg,i)=>(
+            <div key={i} style={{display:"flex",gap:12,alignItems:"flex-start",flexDirection:msg.role==="user"?"row-reverse":"row"}}>
+              <div style={{width:34,height:34,borderRadius:"50%",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,background:msg.role==="user"?"linear-gradient(135deg,#4a6ef5,#7c6dfa)":"radial-gradient(circle,#a855f7,#7c6dfa)"}}>
+                {msg.role==="user"?"👤":"🤖"}
+              </div>
+              <div style={{maxWidth:"78%",background:msg.role==="user"?"#1a1a3a":"#0d0d24",border:`1px solid ${msg.role==="user"?"#3a2a6a":"#1e1e40"}`,padding:"12px 16px",borderRadius:msg.role==="user"?"16px 4px 16px 16px":"4px 16px 16px 16px",fontSize:13,lineHeight:1.75,color:"#e0e0ff",whiteSpace:"pre-wrap",wordBreak:"break-word"}}>
+                {msg.content}
+              </div>
+            </div>
+          ))}
+          {claudeLoading&&(
+            <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
+              <div style={{width:34,height:34,borderRadius:"50%",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,background:"radial-gradient(circle,#a855f7,#7c6dfa)"}}>🤖</div>
+              <div style={{background:"#0d0d24",border:"1px solid #1e1e40",padding:"12px 16px",borderRadius:"4px 16px 16px 16px",display:"flex",gap:6,alignItems:"center"}}>
+                {[0,1,2].map(d=><div key={d} style={{width:8,height:8,borderRadius:"50%",background:"#a855f7",animation:`bounce 1s ${d*0.2}s infinite`}}/>)}
+                <span style={{fontSize:11,color:"#5050a0",marginLeft:6}}>Claude is thinking...</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* INPUT */}
+        <div style={{padding:"16px 20px",borderTop:"1px solid #1a1a3a",background:"rgba(0,0,0,0.4)",flexShrink:0}}>
+          <div style={{display:"flex",gap:10,alignItems:"flex-end",background:"#0d0d24",border:"1.5px solid #3a2a6a",borderRadius:14,padding:"8px 8px 8px 16px"}}>
+            <textarea value={claudeInput} onChange={e=>setClaudeInput(e.target.value)} onKeyDown={handleClaudeKey}
+              placeholder="Ask Claude anything — coding help, ideas, debugging..."
+              rows={2}
+              style={{flex:1,background:"transparent",border:"none",outline:"none",color:"#e0e0ff",fontFamily:"monospace",fontSize:14,resize:"none",lineHeight:1.5,padding:"4px 0"}}/>
+            <button onClick={sendClaude} disabled={claudeLoading||!claudeInput.trim()}
+              style={{background:claudeInput.trim()&&!claudeLoading?"linear-gradient(135deg,#a855f7,#7c6dfa)":"#1a1a3a",border:"none",color:claudeInput.trim()&&!claudeLoading?"#fff":"#3a3a6a",padding:"12px 18px",fontFamily:"monospace",fontSize:13,fontWeight:900,cursor:claudeInput.trim()&&!claudeLoading?"pointer":"default",borderRadius:10,flexShrink:0,letterSpacing:1}}>
+              SEND →
+            </button>
+          </div>
+          <div style={{textAlign:"center",fontSize:10,color:"#2a2a4a",marginTop:8}}>Powered by Claude Opus 4.7 · Pro & Admin only</div>
+        </div>
+      </div>
+      <style>{`@keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:0.4}40%{transform:translateY(-5px);opacity:1}}`}</style>
+    </div>
+  );
+
   // ── MAIN IDE ───────────────────────────────────────────────────
   return (
     <div style={{height:"100vh",background:C.bg,fontFamily:"monospace",color:C.text,display:"flex",flexDirection:"column",overflow:"hidden"}}>
@@ -1029,6 +1113,17 @@ Be concise and friendly.`;
         )}
         <span style={{fontSize:10,color:C.muted}}>👤 {currentUser}</span>
         <button onClick={()=>setView("home")} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"5px 10px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:3}}>🏠</button>
+        {(isAdmin||isPro) ? (
+          <button onClick={()=>setView("claude")}
+            style={{background:"linear-gradient(90deg,#a855f720,#7c6dfa20)",border:"1px solid #7c6dfa",color:"#a855f7",padding:"5px 14px",fontFamily:"monospace",fontSize:10,cursor:"pointer",fontWeight:700,borderRadius:6,display:"flex",alignItems:"center",gap:5}}>
+            🤖 Claude AI
+          </button>
+        ) : (
+          <button onClick={()=>setShowUpgrade(true)}
+            style={{background:"#1a1a2a",border:"1px solid #2a2a4a",color:"#4040a0",padding:"5px 14px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:6,display:"flex",alignItems:"center",gap:5,position:"relative"}}>
+            🔒 Claude AI <span style={{fontSize:8,color:"#7c6dfa",marginLeft:2}}>PRO</span>
+          </button>
+        )}
         {isAdmin&&<button onClick={()=>setView("admin")} style={{background:C.accentDim,border:`1px solid ${C.accent}`,color:C.accent,padding:"5px 14px",fontFamily:"monospace",fontSize:10,cursor:"pointer",fontWeight:700,borderRadius:3}}>⚙ ADMIN</button>}
         <button
           onClick={()=>{
@@ -1081,9 +1176,15 @@ Be concise and friendly.`;
                     <span style={{whiteSpace:"pre-wrap"}}>{msg.content}</span>
                   </div>
                 ) : (
-                  <div style={{maxWidth:"96%",width:"96%",background:C.panel,border:`1px solid ${C.border}`,borderRadius:10,overflow:"hidden"}}>
+                  <div style={{maxWidth:"96%",width:"96%",background:msg.isError?"#1a0808":C.panel,border:`1px solid ${msg.isError?C.red:C.border}`,borderRadius:10,overflow:"hidden"}}>
                     <div style={{padding:"10px 14px",borderBottom:msg.bullets&&msg.bullets.length>0?`1px solid ${C.border}`:"none"}}>
-                      <span style={{whiteSpace:"pre-wrap",fontSize:13,color:C.text}}>{msg.content}</span>
+                      <span style={{whiteSpace:"pre-wrap",fontSize:13,color:msg.isError?C.red:C.text}}>{msg.content}</span>
+                      {msg.isError&&!isAdmin&&!isPro&&(
+                        <button onClick={()=>setShowUpgrade(true)}
+                          style={{marginTop:10,width:"100%",background:"linear-gradient(90deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:"10px 0",fontFamily:"monospace",fontSize:12,fontWeight:900,cursor:"pointer",borderRadius:6,letterSpacing:1}}>
+                          ⚡ Upgrade to Pro →
+                        </button>
+                      )}
                     </div>
                     {msg.bullets&&msg.bullets.length>0&&(
                       <div style={{padding:"10px 14px",background:C.chatBg}}>
