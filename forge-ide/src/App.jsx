@@ -1033,13 +1033,16 @@ Be concise and friendly.`;
           </div>
           <div style={{flex:1,overflowY:"auto",padding:"10px 12px",display:"flex",flexDirection:"column",gap:16,minHeight:0}}>
             {msgs.map((msg,i)=>(
-              <div key={i} style={{display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start"}}>
+              <div key={i} style={{display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start",borderBottom:`1px solid ${C.border}`,paddingBottom:12,marginBottom:4}}>
+                <div style={{fontSize:9,color:msg.role==="user"?C.accent:C.green,letterSpacing:2,marginBottom:4,fontWeight:700}}>
+                  {msg.role==="user"?"YOU ▸":"⚡ FORGE"}
+                </div>
                 {msg.role==="user" ? (
-                  <div style={{maxWidth:"88%",background:C.accent,border:`1px solid ${C.accent}`,padding:"8px 12px",fontSize:13,lineHeight:1.55,color:"#fff",borderRadius:8}}>
+                  <div style={{maxWidth:"88%",background:C.accent,padding:"9px 13px",fontSize:13,lineHeight:1.6,color:"#fff",borderRadius:"12px 12px 4px 12px"}}>
                     <span style={{whiteSpace:"pre-wrap"}}>{msg.content}</span>
                   </div>
                 ) : (
-                  <div style={{maxWidth:"96%",width:"96%",background:C.panel,border:`2px solid ${C.border}`,borderRadius:10,overflow:"hidden"}}>
+                  <div style={{maxWidth:"96%",width:"96%",background:C.panel,border:`1px solid ${C.border}`,borderRadius:10,overflow:"hidden"}}>
                     <div style={{padding:"10px 14px",borderBottom:msg.bullets&&msg.bullets.length>0?`1px solid ${C.border}`:"none"}}>
                       <span style={{whiteSpace:"pre-wrap",fontSize:13,color:C.text}}>{msg.content}</span>
                     </div>
@@ -1092,10 +1095,28 @@ Be concise and friendly.`;
                   placeholder="Describe what to build..." rows={2}
                   style={{width:"100%",boxSizing:"border-box",background:"transparent",border:"none",outline:"none",color:C.text,fontFamily:"monospace",fontSize:13,padding:"10px 12px",resize:"none",lineHeight:1.5,display:"block"}}/>
               </div>
-              <button onClick={send} disabled={loading||!input.trim()}
-                style={{background:input.trim()&&!loading?C.accent:C.panel,border:`2px solid ${input.trim()&&!loading?C.accent:C.border}`,color:input.trim()&&!loading?"#fff":C.muted,padding:"10px 20px",fontFamily:"monospace",fontSize:14,fontWeight:900,cursor:loading||!input.trim()?"not-allowed":"pointer",letterSpacing:1,display:"flex",alignItems:"center",gap:6,borderRadius:8,transition:"all 0.15s",flexShrink:0,height:58}}>
-                {loading?<span style={{fontSize:18}}>⏳</span>:<><span style={{fontSize:18}}>⚡</span>SEND</>}
-              </button>
+              <div style={{display:"flex",flexDirection:"column",gap:6,flexShrink:0}}>
+                <button onClick={send} disabled={loading||!input.trim()}
+                  style={{background:input.trim()&&!loading?C.accent:C.panel,border:`2px solid ${input.trim()&&!loading?C.accent:C.border}`,color:input.trim()&&!loading?"#fff":C.muted,padding:"10px 20px",fontFamily:"monospace",fontSize:14,fontWeight:900,cursor:loading||!input.trim()?"not-allowed":"pointer",letterSpacing:1,display:"flex",alignItems:"center",gap:6,borderRadius:8,transition:"all 0.15s",height:44,minWidth:100,justifyContent:"center"}}>
+                  {loading?<span style={{fontSize:18}}>⏳</span>:<><span style={{fontSize:16}}>⚡</span>BUILD</>}
+                </button>
+                <button
+                  onClick={()=>{
+                    if(!previewHtml||previewHtml===STARTER){alert("Build something first before deploying!");return;}
+                    // Create a downloadable HTML file
+                    const blob = new Blob([previewHtml],{type:"text/html"});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "my-forge-app.html";
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  disabled={!previewHtml||previewHtml===STARTER}
+                  style={{background:previewHtml&&previewHtml!==STARTER?"#0a2a0a":"#0a0a14",border:`1px solid ${previewHtml&&previewHtml!==STARTER?C.green:C.border}`,color:previewHtml&&previewHtml!==STARTER?C.green:C.muted,padding:"0 12px",fontFamily:"monospace",fontSize:10,fontWeight:700,cursor:previewHtml&&previewHtml!==STARTER?"pointer":"not-allowed",display:"flex",alignItems:"center",gap:4,borderRadius:6,height:10,minWidth:100,justifyContent:"center",letterSpacing:1}}>
+                  <span>↓</span> DEPLOY
+                </button>
+              </div>
             </div>
           </div>
         </div>
