@@ -662,21 +662,30 @@ Be concise and friendly.`;
                 <div style={{fontSize:13,color:"#6060a0",letterSpacing:2}}>YOUR PROJECTS</div>
                 {!userIsPro&&<div style={{fontSize:10,color:"#5050a0",background:"#7c6dfa15",border:"1px solid #7c6dfa30",padding:"3px 10px",borderRadius:10}}>{userProjects.length}/{FREE_PROJECT_LIMIT} free slots used</div>}
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:12}}>
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {userProjects.map((p,i)=>(
-                  <div key={p.id} onClick={()=>{setPreviewHtml(p.html);setPreviewKey(k=>k+1);setView("ide");}}
-                    style={{background:"#0d0d24",border:"1px solid #1e1e40",borderRadius:12,padding:16,cursor:"pointer",transition:"all 0.2s",position:"relative",overflow:"hidden"}}>
-                    <div style={{fontSize:10,color:"#4ade80",marginBottom:6}}>⚡ PROJECT</div>
-                    <div style={{fontSize:12,color:"#c8c8ff",fontWeight:700,marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.prompt}</div>
-                    <div style={{fontSize:10,color:"#3a3a6a"}}>{p.time}</div>
+                  <div key={p.id}
+                    onClick={()=>{setPreviewHtml(p.html);setPreviewKey(k=>k+1);setView("ide");}}
+                    style={{background:"#0d0d24",border:"1px solid #1e1e40",borderRadius:12,padding:"14px 18px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+                    <div style={{display:"flex",alignItems:"center",gap:12,flex:1,minWidth:0}}>
+                      <div style={{width:36,height:36,borderRadius:8,background:"linear-gradient(135deg,#7c6dfa,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>⚡</div>
+                      <div style={{minWidth:0}}>
+                        <div style={{fontSize:13,color:"#c8c8ff",fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.prompt}</div>
+                        <div style={{fontSize:10,color:"#3a3a6a",marginTop:2}}>{p.time}</div>
+                      </div>
+                    </div>
+                    <div style={{fontSize:11,color:"#7c6dfa",flexShrink:0}}>Open →</div>
                   </div>
                 ))}
                 {!userIsPro && userProjects.length >= FREE_PROJECT_LIMIT && (
                   <div onClick={()=>setView("payment")}
-                    style={{background:"linear-gradient(135deg,#1a0a2e,#0d0d24)",border:"1.5px dashed #7c6dfa50",borderRadius:12,padding:16,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:88,textAlign:"center"}}>
-                    <div style={{fontSize:20,marginBottom:6}}>🔒</div>
-                    <div style={{fontSize:11,color:"#7c6dfa",fontWeight:700}}>Upgrade to Pro</div>
-                    <div style={{fontSize:10,color:"#3a3a6a",marginTop:2}}>Save unlimited projects</div>
+                    style={{background:"linear-gradient(135deg,#1a0a2e,#0d0d24)",border:"1.5px dashed #7c6dfa50",borderRadius:12,padding:"14px 18px",cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
+                    <div style={{width:36,height:36,borderRadius:8,background:"#7c6dfa20",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>🔒</div>
+                    <div>
+                      <div style={{fontSize:13,color:"#7c6dfa",fontWeight:700}}>Upgrade to Pro — Unlimited Projects</div>
+                      <div style={{fontSize:10,color:"#3a3a6a",marginTop:2}}>You've used all {FREE_PROJECT_LIMIT} free slots</div>
+                    </div>
+                    <div style={{fontSize:11,color:"#7c6dfa",marginLeft:"auto",flexShrink:0}}>Upgrade →</div>
                   </div>
                 )}
               </div>
@@ -1022,22 +1031,32 @@ Be concise and friendly.`;
                 style={{background:C.inputBg,border:`1px solid ${C.border}`,color:C.muted,padding:"3px 10px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:3}}>{p}</button>
             ))}
           </div>
-          <div style={{flex:1,overflowY:"auto",padding:"10px 12px",display:"flex",flexDirection:"column",gap:8,minHeight:0}}>
+          <div style={{flex:1,overflowY:"auto",padding:"10px 12px",display:"flex",flexDirection:"column",gap:16,minHeight:0}}>
             {msgs.map((msg,i)=>(
               <div key={i} style={{display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start"}}>
-                <div style={{maxWidth:"88%",background:msg.role==="user"?C.accent:C.panel,border:`1px solid ${msg.role==="user"?C.accent:C.border}`,padding:"8px 12px",fontSize:13,lineHeight:1.55,color:msg.role==="user"?"#fff":C.text,borderRadius:8}}>
-                  <span style={{whiteSpace:"pre-wrap"}}>{msg.content}</span>
-                  {msg.bullets&&msg.bullets.length>0&&(
-                    <div style={{marginTop:8,padding:"8px 10px",background:C.chatBg,border:`1px solid ${C.green}`,borderRadius:6}}>
-                      <div style={{fontSize:10,color:C.green,letterSpacing:2,marginBottom:6}}>BUILT</div>
-                      {msg.bullets.map((b,j)=>(
-                        <div key={j} style={{fontSize:11,color:C.text,marginBottom:3,display:"flex",gap:6}}>
-                          <span style={{color:C.green}}>✓</span><span>{b}</span>
-                        </div>
-                      ))}
+                {msg.role==="user" ? (
+                  <div style={{maxWidth:"88%",background:C.accent,border:`1px solid ${C.accent}`,padding:"8px 12px",fontSize:13,lineHeight:1.55,color:"#fff",borderRadius:8}}>
+                    <span style={{whiteSpace:"pre-wrap"}}>{msg.content}</span>
+                  </div>
+                ) : (
+                  <div style={{maxWidth:"96%",width:"96%",background:C.panel,border:`2px solid ${C.border}`,borderRadius:10,overflow:"hidden"}}>
+                    <div style={{padding:"10px 14px",borderBottom:msg.bullets&&msg.bullets.length>0?`1px solid ${C.border}`:"none"}}>
+                      <span style={{whiteSpace:"pre-wrap",fontSize:13,color:C.text}}>{msg.content}</span>
                     </div>
-                  )}
-                </div>
+                    {msg.bullets&&msg.bullets.length>0&&(
+                      <div style={{padding:"10px 14px",background:C.chatBg}}>
+                        <div style={{fontSize:9,color:C.green,letterSpacing:3,marginBottom:8,fontWeight:700}}>BUILT</div>
+                        <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                          {msg.bullets.map((b,j)=>(
+                            <div key={j} style={{fontSize:11,color:C.text,display:"flex",gap:6,alignItems:"flex-start"}}>
+                              <span style={{color:C.green,flexShrink:0,marginTop:1}}>✓</span><span>{b}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
             {loading&&buildSteps.length>0&&(
