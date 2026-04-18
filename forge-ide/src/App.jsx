@@ -177,7 +177,7 @@ export default function App() {
     const label = prompt.replace(/^build (a |an )?/i,"").replace(/^make (a |an )?/i,"").trim() || "app";
     setCalls(c=>c+1);
     const tok=(data.usage?.input_tokens||0)+(data.usage?.output_tokens||0);
-    setTokens(t=>t+tok);
+    if(!isAdmin) setTokens(t=>t+tok); // Admins have infinite tokens
     if (code) {
       setPreviewHtml(code);
       setPreviewKey(k=>k+1);
@@ -316,22 +316,41 @@ Be concise and friendly.`;
 
   // ── UPGRADE MODAL ──────────────────────────────────────────────
   const UpgradeModal = () => showUpgrade && (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,fontFamily:"monospace"}}>
-      <div style={{background:C.panel,border:`2px solid ${C.accent}`,borderRadius:12,padding:36,maxWidth:380,width:"90%",textAlign:"center"}}>
-        <div style={{fontSize:40,marginBottom:12}}>⚡</div>
-        <div style={{fontSize:22,fontWeight:900,color:C.accent,marginBottom:6}}>Free limit reached!</div>
-        <div style={{fontSize:13,color:C.muted,marginBottom:24,lineHeight:1.7}}>You've used <strong style={{color:C.text}}>{FREE_CREDIT_LIMIT.toLocaleString()} free credits</strong>.<br/>Upgrade to <strong style={{color:C.accent}}>Forge Pro</strong> for unlimited builds.</div>
-        <div style={{background:C.accentDim,border:`1px solid ${C.accent}`,borderRadius:8,padding:"18px 20px",marginBottom:20}}>
-          <div style={{fontSize:32,fontWeight:900,color:C.accent}}>{PRO_PRICE}</div>
-          <div style={{fontSize:11,color:C.muted,letterSpacing:2,marginTop:4}}>PER MONTH</div>
-          <div style={{marginTop:12,display:"flex",flexDirection:"column",gap:6,textAlign:"left"}}>
-            {["✓ Unlimited AI builds","✓ All app types & games","✓ Priority generation","✓ Full history access"].map(f=>(
-              <div key={f} style={{fontSize:12,color:C.text}}>{f}</div>
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,fontFamily:"monospace"}}>
+      <div style={{background:C.panel,border:`2px solid ${C.accent}`,borderRadius:16,padding:40,maxWidth:400,width:"90%",textAlign:"center",boxShadow:`0 0 60px ${C.accent}40`}}>
+        <div style={{fontSize:48,marginBottom:8}}>🚫</div>
+        <div style={{fontSize:24,fontWeight:900,color:C.red,marginBottom:8}}>You ran out of tokens!</div>
+        <div style={{fontSize:13,color:C.muted,marginBottom:8,lineHeight:1.7}}>
+          You've used all <strong style={{color:C.text}}>{FREE_CREDIT_LIMIT.toLocaleString()} free tokens</strong>.
+        </div>
+        <div style={{fontSize:13,color:C.muted,marginBottom:28,lineHeight:1.7}}>
+          Upgrade to <strong style={{color:C.accent}}>Forge Pro</strong> to keep building — unlimited tokens, forever.
+        </div>
+        <div style={{background:"linear-gradient(135deg,#1a0a2e,#2a1040)",border:`2px solid ${C.accent}`,borderRadius:12,padding:"24px 20px",marginBottom:24,position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",top:0,right:0,background:C.accent,color:"#fff",fontSize:9,fontWeight:900,padding:"4px 10px",borderRadius:"0 0 0 8px",letterSpacing:2}}>MOST POPULAR</div>
+          <div style={{fontSize:13,color:C.muted,letterSpacing:3,marginBottom:8}}>FORGE PRO</div>
+          <div style={{fontSize:40,fontWeight:900,color:C.accent,marginBottom:4}}>{PRO_PRICE}</div>
+          <div style={{fontSize:11,color:C.muted,marginBottom:16}}>billed monthly · cancel anytime</div>
+          <div style={{display:"flex",flexDirection:"column",gap:8,textAlign:"left"}}>
+            {[
+              ["∞","Unlimited tokens — build forever"],
+              ["⚡","All app types, games & tools"],
+              ["🚀","Priority AI generation"],
+              ["📋","Full build history"],
+              ["🎨","Live theme customisation"],
+            ].map(([icon,feat])=>(
+              <div key={feat} style={{fontSize:12,color:C.text,display:"flex",gap:8,alignItems:"center"}}>
+                <span style={{color:C.green,fontSize:14}}>{icon}</span><span>{feat}</span>
+              </div>
             ))}
           </div>
         </div>
-        <button style={{width:"100%",background:C.accent,border:"none",color:"#fff",padding:"13px 0",fontFamily:"monospace",fontSize:15,fontWeight:900,cursor:"pointer",borderRadius:6,letterSpacing:2,marginBottom:10}}>UPGRADE TO PRO →</button>
-        <button onClick={()=>setShowUpgrade(false)} style={{width:"100%",background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"10px 0",fontFamily:"monospace",fontSize:12,cursor:"pointer",borderRadius:6}}>Maybe later</button>
+        <button style={{width:"100%",background:`linear-gradient(90deg,${C.accent},#a855f7)`,border:"none",color:"#fff",padding:"15px 0",fontFamily:"monospace",fontSize:16,fontWeight:900,cursor:"pointer",borderRadius:8,letterSpacing:2,marginBottom:10,boxShadow:`0 4px 20px ${C.accent}60`}}>
+          UPGRADE TO PRO →
+        </button>
+        <button onClick={()=>setShowUpgrade(false)} style={{width:"100%",background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"10px 0",fontFamily:"monospace",fontSize:12,cursor:"pointer",borderRadius:6}}>
+          Maybe later
+        </button>
       </div>
     </div>
   );
@@ -535,14 +554,22 @@ Be concise and friendly.`;
         <span style={{fontSize:10,color:C.muted}}>AI READY</span>
         <div style={{flex:1}}/>
         {!isAdmin&&(
-          <div style={{display:"flex",alignItems:"center",gap:6,background:C.panel,border:`1px solid ${C.border}`,borderRadius:4,padding:"4px 10px"}}>
+          <div onClick={tokens>=FREE_CREDIT_LIMIT?()=>setShowUpgrade(true):undefined}
+            style={{display:"flex",alignItems:"center",gap:6,background:C.panel,border:`1px solid ${tokens>=FREE_CREDIT_LIMIT?C.red:C.border}`,borderRadius:4,padding:"4px 10px",cursor:tokens>=FREE_CREDIT_LIMIT?"pointer":"default"}}>
             <div style={{width:60,height:5,background:C.border,borderRadius:3,overflow:"hidden"}}>
-              <div style={{width:`${Math.min(100,(tokens/FREE_CREDIT_LIMIT)*100)}%`,height:"100%",background:tokens>=FREE_CREDIT_LIMIT?C.red:C.accent,borderRadius:3,transition:"width 0.3s"}}/>
+              <div style={{width:`${Math.min(100,(tokens/FREE_CREDIT_LIMIT)*100)}%`,height:"100%",background:tokens>=(FREE_CREDIT_LIMIT*0.8)?C.red:C.accent,borderRadius:3,transition:"width 0.3s"}}/>
             </div>
-            <span style={{fontSize:9,color:tokens>=FREE_CREDIT_LIMIT?C.red:C.muted}}>{tokens.toLocaleString()}/{FREE_CREDIT_LIMIT.toLocaleString()}</span>
+            <span style={{fontSize:9,color:tokens>=FREE_CREDIT_LIMIT?C.red:tokens>=(FREE_CREDIT_LIMIT*0.8)?"#f97316":C.muted}}>
+              {tokens>=FREE_CREDIT_LIMIT?"OUT OF TOKENS ⚠️":`${tokens.toLocaleString()}/${FREE_CREDIT_LIMIT.toLocaleString()}`}
+            </span>
           </div>
         )}
-        {isAdmin&&<span style={{fontSize:9,color:C.green,background:C.chatBg,border:`1px solid ${C.green}`,padding:"3px 8px",borderRadius:3}}>∞ ADMIN</span>}
+        {isAdmin&&(
+          <div style={{display:"flex",alignItems:"center",gap:5,background:"#0a1a0a",border:`1px solid ${C.green}`,borderRadius:4,padding:"4px 10px"}}>
+            <span style={{fontSize:14,color:C.green}}>∞</span>
+            <span style={{fontSize:9,color:C.green,fontWeight:900,letterSpacing:1}}>ADMIN</span>
+          </div>
+        )}
         <span style={{fontSize:10,color:C.muted}}>👤 {currentUser}</span>
         <button onClick={()=>setView("home")} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"5px 10px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:3}}>🏠</button>
         <button onClick={()=>setView("admin")} style={{background:C.accentDim,border:`1px solid ${C.accent}`,color:C.accent,padding:"5px 14px",fontFamily:"monospace",fontSize:10,cursor:"pointer",fontWeight:700,borderRadius:3}}>⚙ ADMIN</button>
