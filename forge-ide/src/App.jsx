@@ -373,7 +373,57 @@ Be concise and friendly.`;
             </div>
           ))}
         </div>
-        <div style={{fontSize:10,color:"#2a2a4a"}}>*Free plan: 4,000 tokens · Pro: unlimited</div>
+        <div style={{fontSize:10,color:"#2a2a4a",marginBottom:60}}>*Free plan: 4,000 tokens · Pro: unlimited</div>
+
+        {/* PRICING SECTION */}
+        <div style={{width:"100%",maxWidth:800,marginBottom:60}}>
+          <div style={{textAlign:"center",marginBottom:36}}>
+            <div style={{fontSize:11,color:"#7c6dfa",letterSpacing:3,marginBottom:8}}>PRICING</div>
+            <div style={{fontSize:"clamp(1.5rem,4vw,2.2rem)",fontWeight:900,color:"#fff",marginBottom:8}}>Simple, transparent pricing</div>
+            <div style={{fontSize:13,color:"#5050a0"}}>Start free. Upgrade when you're ready.</div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+            {/* Free plan */}
+            <div style={{background:"#0d0d24",border:"1px solid #1e1e40",borderRadius:16,padding:28}}>
+              <div style={{fontSize:13,color:"#5050a0",letterSpacing:2,marginBottom:8}}>FREE</div>
+              <div style={{fontSize:36,fontWeight:900,color:"#fff",marginBottom:4}}>$0</div>
+              <div style={{fontSize:12,color:"#3a3a6a",marginBottom:20}}>forever</div>
+              <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
+                {[["✓","4,000 free tokens"],["✓","2 saved projects"],["✓","All app types"],["✓","Live preview"],["✗","Unlimited builds"],["✗","Unlimited projects"]].map(([icon,feat])=>(
+                  <div key={feat} style={{fontSize:12,color:icon==="✓"?"#c8c8ff":"#2a2a4a",display:"flex",gap:8}}>
+                    <span style={{color:icon==="✓"?"#4ade80":"#2a2a4a"}}>{icon}</span>{feat}
+                  </div>
+                ))}
+              </div>
+              <button onClick={()=>setAuthPage("signup")}
+                style={{width:"100%",background:"transparent",border:"1px solid #2a2a4a",color:"#6060a0",padding:"12px 0",fontFamily:"monospace",fontSize:13,cursor:"pointer",borderRadius:8}}>
+                Get Started Free
+              </button>
+            </div>
+            {/* Pro plan */}
+            <div style={{background:"linear-gradient(135deg,#1a0a2e,#0d0d24)",border:"2px solid #7c6dfa",borderRadius:16,padding:28,position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",top:0,right:0,background:"linear-gradient(90deg,#7c6dfa,#a855f7)",color:"#fff",fontSize:9,fontWeight:900,padding:"5px 12px",borderRadius:"0 0 0 8px",letterSpacing:2}}>MOST POPULAR</div>
+              <div style={{fontSize:13,color:"#7c6dfa",letterSpacing:2,marginBottom:8}}>PRO</div>
+              <div style={{display:"flex",alignItems:"baseline",gap:4,marginBottom:4}}>
+                <span style={{fontSize:36,fontWeight:900,color:"#fff"}}>$12.99</span>
+                <span style={{fontSize:12,color:"#5050a0"}}>/month</span>
+              </div>
+              <div style={{fontSize:12,color:"#3a3a6a",marginBottom:20}}>cancel anytime</div>
+              <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
+                {[["∞","Unlimited tokens forever"],["∞","Unlimited saved projects"],["⚡","Priority AI generation"],["🎨","Live theme customisation"],["📋","Full build history"],["🛟","Priority support"]].map(([icon,feat])=>(
+                  <div key={feat} style={{fontSize:12,color:"#c8c8ff",display:"flex",gap:8}}>
+                    <span style={{color:"#4ade80"}}>{icon}</span>{feat}
+                  </div>
+                ))}
+              </div>
+              <button onClick={()=>{ setAuthPage("signup"); }}
+                style={{width:"100%",background:"linear-gradient(90deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:"13px 0",fontFamily:"monospace",fontSize:14,fontWeight:900,cursor:"pointer",borderRadius:8,letterSpacing:1,boxShadow:"0 4px 20px #7c6dfa40"}}>
+                START PRO →
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       {/* AUTH MODAL */}

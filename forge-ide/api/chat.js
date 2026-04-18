@@ -21,8 +21,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model,
-        max_tokens: 16000,
-        thinking: { type: "disabled" },
+        max_tokens: 8000,
         system,
         messages,
       }),
