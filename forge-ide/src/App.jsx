@@ -99,7 +99,7 @@ const DEFAULT_THEME = {
 };
 
 const QUICK = ["Snake game","Tetris","Todo app","Calculator","Tic tac toe","Pomodoro timer","Kanban board","Landing page"];
-const CLAUDE_MODEL = "claude-opus-4-6"; // Opus for the chatbot
+const CLAUDE_MODEL = "claude-opus-4-6";
 const AQUICK = ["Change theme to dark","Change theme to purple","Make it green","Reset to light blue","Review current build"];
 const EXAMPLES = ["Build a snake game with neon visuals","Create a todo app with drag and drop","Make a Tetris clone","Build a pomodoro timer","Create a music visualizer","Make a pixel art editor"];
 
@@ -258,7 +258,7 @@ Be concise and friendly.`;
       const clean = reply.replace(/```json[\s\S]*?```/gi,"").trim();
       setAdminMsgs(m=>[...m,{role:"assistant",content:clean||"Done!"}]);
       if(theme?.bg){ setC(prev=>({...prev,...theme})); setAdminMsgs(m=>[...m,{role:"assistant",content:"✅ Theme applied live!"}]); }
-      setCalls(c=>c+1); setTokens(t=>t+(data.usage?.input_tokens||0)+(data.usage?.output_tokens||0));
+      setCalls(c=>c+1); if(!isAdmin) setTokens(t=>t+(data.usage?.input_tokens||0)+(data.usage?.output_tokens||0));
     } catch(e){ setAdminMsgs(m=>[...m,{role:"assistant",content:`⚠️ ${e.message}`}]); }
     setAdminLoading(false);
     setTimeout(()=>adminRef.current?.focus(),100);
@@ -280,7 +280,7 @@ Be concise and friendly.`;
       const data = await r.json();
       const reply = data.content?.filter(b=>b.type==="text").map(b=>b.text||"").join("")||"Sorry, I couldn't respond.";
       setClaudeChat(m=>[...m,{role:"assistant",content:reply}]);
-    } catch(e){ setClaudeChat(m=>[...m,{role:"assistant",content:`⚠️ Error: ${e.message}`}]); }
+    } catch(e){ setClaudeChat(m=>[...m,{role:"assistant",content:`⚠️ ${e.message}`}]); }
     setClaudeLoading(false);
   };
 
