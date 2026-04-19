@@ -443,16 +443,15 @@ Be concise and friendly.`;
         </div>
         <div style={{fontSize:10,color:"#2a2a4a",marginBottom:48}}>*Free plan: 4,000 tokens · Pro: 100,000 tokens · Ultimate: unlimited</div>
 
-        {/* PRICING for logged-in users */}
+        {/* PRICING - only shows when logged in */}
         {!isAdmin&&(
           <div style={{width:"100%",maxWidth:800,marginBottom:48}}>
             <div style={{textAlign:"center",marginBottom:28}}>
-              <div style={{fontSize:11,color:"#7c6dfa",letterSpacing:3,marginBottom:6}}>PLANS</div>
-              <div style={{fontSize:"clamp(1.3rem,3vw,1.8rem)",fontWeight:900,color:"#fff",marginBottom:6}}>Upgrade your Forge</div>
-              <div style={{fontSize:12,color:"#5050a0"}}>Pick the plan that fits your needs</div>
+              <div style={{fontSize:11,color:"#7c6dfa",letterSpacing:3,marginBottom:6}}>UPGRADE</div>
+              <div style={{fontSize:"clamp(1.3rem,3vw,1.8rem)",fontWeight:900,color:"#fff",marginBottom:6}}>Power up your Forge</div>
+              <div style={{fontSize:12,color:"#5050a0"}}>Pick the plan that fits you</div>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:14}}>
-              {/* Free */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:14}}>
               <div style={{background:"#0d0d24",border:"1px solid #1e1e40",borderRadius:14,padding:22}}>
                 <div style={{fontSize:11,color:"#5050a0",letterSpacing:2,marginBottom:8}}>FREE</div>
                 <div style={{fontSize:28,fontWeight:900,color:"#fff",marginBottom:2}}>$0</div>
@@ -461,37 +460,29 @@ Be concise and friendly.`;
                   <div key={f} style={{fontSize:11,color:i==="✓"?"#c8c8ff":"#2a2a4a",display:"flex",gap:6,marginBottom:4}}><span style={{color:i==="✓"?"#4ade80":"#2a2a4a"}}>{i}</span>{f}</div>
                 ))}
               </div>
-              {/* Pro */}
               <div style={{background:"linear-gradient(135deg,#1a0a2e,#0d0d24)",border:"2px solid #7c6dfa",borderRadius:14,padding:22,position:"relative"}}>
-                <div style={{position:"absolute",top:-9,right:12,background:"linear-gradient(90deg,#7c6dfa,#a855f7)",color:"#fff",fontSize:8,fontWeight:900,padding:"3px 10px",borderRadius:8,letterSpacing:1}}>POPULAR</div>
+                <div style={{position:"absolute",top:-9,right:12,background:"linear-gradient(90deg,#7c6dfa,#a855f7)",color:"#fff",fontSize:8,fontWeight:900,padding:"3px 10px",borderRadius:8,letterSpacing:1,whiteSpace:"nowrap"}}>POPULAR</div>
                 <div style={{fontSize:11,color:"#7c6dfa",letterSpacing:2,marginBottom:8}}>PRO</div>
                 <div style={{fontSize:28,fontWeight:900,color:"#fff",marginBottom:2}}>$12.99<span style={{fontSize:12,color:"#5050a0"}}>/mo</span></div>
                 <div style={{fontSize:10,color:"#3a3a6a",marginBottom:14}}>cancel anytime</div>
                 {[["✓","100,000 tokens/mo"],["✓","Unlimited projects"],["✓","Priority builds"],["✗","Claude AI chat"]].map(([i,f])=>(
                   <div key={f} style={{fontSize:11,color:i==="✓"?"#c8c8ff":"#2a2a4a",display:"flex",gap:6,marginBottom:4}}><span style={{color:i==="✓"?"#4ade80":"#2a2a4a"}}>{i}</span>{f}</div>
                 ))}
-                <button onClick={()=>setView("payment")} style={{width:"100%",background:"linear-gradient(90deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:"10px 0",fontFamily:"monospace",fontSize:12,fontWeight:900,cursor:"pointer",borderRadius:7,marginTop:12}}>
-                  UPGRADE TO PRO →
-                </button>
+                <button onClick={()=>setView("payment")} style={{width:"100%",background:"linear-gradient(90deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:"10px 0",fontFamily:"monospace",fontSize:12,fontWeight:900,cursor:"pointer",borderRadius:7,marginTop:12,letterSpacing:1}}>UPGRADE TO PRO →</button>
               </div>
-              {/* Ultimate */}
               <div style={{background:"linear-gradient(135deg,#1a0800,#0d0d24)",border:"2px solid #f59e0b",borderRadius:14,padding:22,position:"relative"}}>
-                <div style={{position:"absolute",top:-9,right:12,background:"linear-gradient(90deg,#f59e0b,#ef4444)",color:"#fff",fontSize:8,fontWeight:900,padding:"3px 10px",borderRadius:8,letterSpacing:1}}>✦ BEST</div>
+                <div style={{position:"absolute",top:-9,right:12,background:"linear-gradient(90deg,#f59e0b,#ef4444)",color:"#fff",fontSize:8,fontWeight:900,padding:"3px 10px",borderRadius:8,letterSpacing:1,whiteSpace:"nowrap"}}>✦ BEST VALUE</div>
                 <div style={{fontSize:11,color:"#f59e0b",letterSpacing:2,marginBottom:8}}>ULTIMATE</div>
                 <div style={{fontSize:28,fontWeight:900,color:"#fff",marginBottom:2}}>$29.99<span style={{fontSize:12,color:"#5050a0"}}>/mo</span></div>
                 <div style={{fontSize:10,color:"#3a3a6a",marginBottom:14}}>cancel anytime</div>
-                {[["∞","Unlimited tokens"],["✓","Unlimited projects"],["🤖","Claude AI chatbot"],["⚡","All Pro features"]].map(([i,f])=>(
+                {[["∞","Unlimited tokens forever"],["🤖","Claude Opus AI chatbot"],["✓","Unlimited projects"],["⚡","Everything in Pro"]].map(([i,f])=>(
                   <div key={f} style={{fontSize:11,color:"#c8c8ff",display:"flex",gap:6,marginBottom:4}}><span style={{color:"#f59e0b"}}>{i}</span>{f}</div>
                 ))}
-                <button onClick={()=>setView("payment")} style={{width:"100%",background:"linear-gradient(90deg,#f59e0b,#ef4444)",border:"none",color:"#fff",padding:"10px 0",fontFamily:"monospace",fontSize:12,fontWeight:900,cursor:"pointer",borderRadius:7,marginTop:12}}>
-                  GET ULTIMATE →
-                </button>
+                <button onClick={()=>setView("payment")} style={{width:"100%",background:"linear-gradient(90deg,#f59e0b,#ef4444)",border:"none",color:"#fff",padding:"10px 0",fontFamily:"monospace",fontSize:12,fontWeight:900,cursor:"pointer",borderRadius:7,marginTop:12,letterSpacing:1}}>GET ULTIMATE ✦ →</button>
               </div>
             </div>
           </div>
         )}
-
-
 
       </div>
 
@@ -646,21 +637,30 @@ Be concise and friendly.`;
           ))}
         </div>
 
-        <button
-          onClick={()=>{
-            const stripeLink = localStorage.getItem('forge_stripe_link');
-            if (stripeLink && stripeLink.startsWith('http')) {
-              // Pass user email to Stripe for automatic Pro grant
-              const email = USER_STORE[currentUser]?.email || "";
-              const url = email ? `${stripeLink}?prefilled_email=${encodeURIComponent(email)}` : stripeLink;
-              window.open(url, "_blank");
-            } else {
-              alert("Payments not yet configured. Ask the admin to add a Stripe Payment Link in Admin → Settings.");
-            }
-          }}
-          style={{width:"100%",background:"linear-gradient(90deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:"16px 0",fontFamily:"monospace",fontSize:16,fontWeight:900,cursor:"pointer",borderRadius:10,letterSpacing:2,boxShadow:"0 4px 30px #7c6dfa40",marginBottom:12}}>
-          PAY $12.99/MONTH →
-        </button>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+          <button
+            onClick={()=>{
+              const link = localStorage.getItem('forge_stripe_link');
+              if(link&&link.startsWith('http')){
+                const email=USER_STORE[currentUser]?.email||"";
+                window.open(email?`${link}?prefilled_email=${encodeURIComponent(email)}`:link,"_blank");
+              } else { alert("Pro payment link not yet configured. Go to Admin → Settings."); }
+            }}
+            style={{background:"linear-gradient(90deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:"14px 0",fontFamily:"monospace",fontSize:13,fontWeight:900,cursor:"pointer",borderRadius:8,letterSpacing:1}}>
+            GET PRO — $12.99/mo →
+          </button>
+          <button
+            onClick={()=>{
+              const link = localStorage.getItem('forge_ultimate_link');
+              if(link&&link.startsWith('http')){
+                const email=USER_STORE[currentUser]?.email||"";
+                window.open(email?`${link}?prefilled_email=${encodeURIComponent(email)}`:link,"_blank");
+              } else { alert("Ultimate payment link not yet configured. Go to Admin → Settings."); }
+            }}
+            style={{background:"linear-gradient(90deg,#f59e0b,#ef4444)",border:"none",color:"#fff",padding:"14px 0",fontFamily:"monospace",fontSize:13,fontWeight:900,cursor:"pointer",borderRadius:8,letterSpacing:1}}>
+            GET ULTIMATE — $29.99/mo →
+          </button>
+        </div>
         <div style={{textAlign:"center",fontSize:11,color:"#3a3a6a",marginBottom:8}}>
           After paying, sign out and back in — your Pro status will activate automatically ✅
         </div>
@@ -1036,21 +1036,24 @@ Be concise and friendly.`;
               </div>
               <div style={{background:C.panel,border:`1px solid ${C.border}`,padding:20,borderRadius:8,marginBottom:16}}>
                 <div style={{fontSize:11,color:C.muted,letterSpacing:3,marginBottom:12}}>STRIPE PAYMENT LINK</div>
-                <div style={{fontSize:11,color:C.muted,marginBottom:10,lineHeight:1.7}}>
-                  1. Go to <span style={{color:C.accent}}>dashboard.stripe.com</span><br/>
-                  2. Create a Payment Link for $12.99/month<br/>
-                  3. Paste the link below — it will appear on the upgrade page
+                <div style={{fontSize:11,color:C.muted,marginBottom:12,lineHeight:1.7}}>
+                  Paste your Stripe Payment Links below. Create them at <span style={{color:C.accent}}>dashboard.stripe.com → Payment Links</span>
                 </div>
+                <div style={{fontSize:10,color:C.muted,marginBottom:4,letterSpacing:1}}>PRO LINK ($12.99/mo)</div>
                 <input
-                  placeholder="https://buy.stripe.com/your_link"
-                  onChange={e=>{
-                    // Store in localStorage for persistence
-                    localStorage.setItem('forge_stripe_link', e.target.value);
-                  }}
+                  placeholder="https://buy.stripe.com/pro_link"
+                  onChange={e=>localStorage.setItem('forge_stripe_link', e.target.value)}
                   defaultValue={typeof localStorage !== 'undefined' ? localStorage.getItem('forge_stripe_link')||'' : ''}
-                  style={{width:"100%",boxSizing:"border-box",background:C.bg,border:`1px solid ${C.border}`,color:C.text,padding:"10px 12px",fontFamily:"monospace",fontSize:12,outline:"none",borderRadius:6,marginBottom:8}}
+                  style={{width:"100%",boxSizing:"border-box",background:C.bg,border:`1px solid ${C.border}`,color:C.text,padding:"10px 12px",fontFamily:"monospace",fontSize:12,outline:"none",borderRadius:6,marginBottom:12}}
                 />
-                <div style={{fontSize:10,color:C.muted}}>Once added, the Pay button on the upgrade page will redirect users to Stripe.</div>
+                <div style={{fontSize:10,color:"#f59e0b",marginBottom:4,letterSpacing:1}}>ULTIMATE LINK ($29.99/mo)</div>
+                <input
+                  placeholder="https://buy.stripe.com/ultimate_link"
+                  onChange={e=>localStorage.setItem('forge_ultimate_link', e.target.value)}
+                  defaultValue={typeof localStorage !== 'undefined' ? localStorage.getItem('forge_ultimate_link')||'' : ''}
+                  style={{width:"100%",boxSizing:"border-box",background:C.bg,border:`1px solid #f59e0b40`,color:C.text,padding:"10px 12px",fontFamily:"monospace",fontSize:12,outline:"none",borderRadius:6,marginBottom:8}}
+                />
+                <div style={{fontSize:10,color:C.muted}}>Users will be redirected to Stripe with their email pre-filled.</div>
               </div>
               <div style={{background:C.panel,border:`1px solid ${C.border}`,padding:20,borderRadius:8}}>
                 <div style={{fontSize:11,color:C.muted,letterSpacing:3,marginBottom:12}}>RESET THEME</div>
