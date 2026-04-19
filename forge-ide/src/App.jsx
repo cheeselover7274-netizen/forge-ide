@@ -4,7 +4,9 @@ const ADMIN_USER = "admin";
 const ADMIN_PASS = "forge2024";
 const MODEL = "claude-sonnet-4-6";
 const FREE_CREDIT_LIMIT = 4000;
+const PRO_CREDIT_LIMIT = 100000;
 const PRO_PRICE = "$12.99/mo";
+const ULTIMATE_PRICE = "$29.99/mo";
 // USER_STORE: { username: { pass, email, projects: [], isPro: false } }
 const USER_STORE = {};
 const FREE_PROJECT_LIMIT = 2;
@@ -109,6 +111,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState("");
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [isPro, setIsPro] = useState(false);
+  const [isUltimate, setIsUltimate] = useState(false);
   const [authPage, setAuthPage] = useState("");
   const [lu, setLu] = useState(""); const [lp, setLp] = useState(""); const [le, setLe] = useState("");
   const [su, setSu] = useState(""); const [se, setSe] = useState(""); const [sp, setSp] = useState(""); const [sp2, setSp2] = useState(""); const [sErr, setSErr] = useState(""); const [sOk, setSOk] = useState("");
@@ -222,7 +225,8 @@ export default function App() {
   const send = async () => {
     const p = input.trim();
     if(!p||loading) return;
-    if(!isAdmin && !isPro && tokens >= FREE_CREDIT_LIMIT) { setShowUpgrade(true); return; }
+    const limit = isAdmin||isUltimate ? Infinity : isPro ? PRO_CREDIT_LIMIT : FREE_CREDIT_LIMIT;
+    if(tokens >= limit && limit !== Infinity) { setShowUpgrade(true); return; }
     setInput("");
     setMsgs(m=>[...m,{role:"user",content:p}]);
     setLoading(true);
@@ -363,7 +367,7 @@ Be concise and friendly.`;
     if(sp!==sp2){ setSErr("Passwords don't match"); return; }
     if(sp.length<6){ setSErr("Password must be 6+ characters"); return; }
     if(su===ADMIN_USER||USER_STORE[su]){ setSErr("Username taken"); return; }
-    USER_STORE[su] = { pass:sp, email:se, projects:[], isPro:false };
+    USER_STORE[su] = { pass:sp, email:se, projects:[], isPro:false, isUltimate:false };
     setSOk("Account created! Sign in now.");
     setAuthPage("signin"); setLu(su); setLp("");
   };
@@ -437,56 +441,57 @@ Be concise and friendly.`;
             </div>
           ))}
         </div>
-        <div style={{fontSize:10,color:"#2a2a4a",marginBottom:60}}>*Free plan: 4,000 tokens · Pro: unlimited</div>
+        <div style={{fontSize:10,color:"#2a2a4a",marginBottom:48}}>*Free plan: 4,000 tokens · Pro: 100,000 tokens · Ultimate: unlimited</div>
 
-        {/* PRICING SECTION */}
-        <div style={{width:"100%",maxWidth:800,marginBottom:60}}>
-          <div style={{textAlign:"center",marginBottom:36}}>
-            <div style={{fontSize:11,color:"#7c6dfa",letterSpacing:3,marginBottom:8}}>PRICING</div>
-            <div style={{fontSize:"clamp(1.5rem,4vw,2.2rem)",fontWeight:900,color:"#fff",marginBottom:8}}>Simple, transparent pricing</div>
-            <div style={{fontSize:13,color:"#5050a0"}}>Start free. Upgrade when you're ready.</div>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-            {/* Free plan */}
-            <div style={{background:"#0d0d24",border:"1px solid #1e1e40",borderRadius:16,padding:28}}>
-              <div style={{fontSize:13,color:"#5050a0",letterSpacing:2,marginBottom:8}}>FREE</div>
-              <div style={{fontSize:36,fontWeight:900,color:"#fff",marginBottom:4}}>$0</div>
-              <div style={{fontSize:12,color:"#3a3a6a",marginBottom:20}}>forever</div>
-              <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
-                {[["✓","4,000 free tokens"],["✓","2 saved projects"],["✓","All app types"],["✓","Live preview"],["✗","Unlimited builds"],["✗","Unlimited projects"]].map(([icon,feat])=>(
-                  <div key={feat} style={{fontSize:12,color:icon==="✓"?"#c8c8ff":"#2a2a4a",display:"flex",gap:8}}>
-                    <span style={{color:icon==="✓"?"#4ade80":"#2a2a4a"}}>{icon}</span>{feat}
-                  </div>
+        {/* PRICING for logged-in users */}
+        {!isAdmin&&(
+          <div style={{width:"100%",maxWidth:800,marginBottom:48}}>
+            <div style={{textAlign:"center",marginBottom:28}}>
+              <div style={{fontSize:11,color:"#7c6dfa",letterSpacing:3,marginBottom:6}}>PLANS</div>
+              <div style={{fontSize:"clamp(1.3rem,3vw,1.8rem)",fontWeight:900,color:"#fff",marginBottom:6}}>Upgrade your Forge</div>
+              <div style={{fontSize:12,color:"#5050a0"}}>Pick the plan that fits your needs</div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:14}}>
+              {/* Free */}
+              <div style={{background:"#0d0d24",border:"1px solid #1e1e40",borderRadius:14,padding:22}}>
+                <div style={{fontSize:11,color:"#5050a0",letterSpacing:2,marginBottom:8}}>FREE</div>
+                <div style={{fontSize:28,fontWeight:900,color:"#fff",marginBottom:2}}>$0</div>
+                <div style={{fontSize:10,color:"#3a3a6a",marginBottom:14}}>forever</div>
+                {[["✓","4,000 tokens"],["✓","2 saved projects"],["✗","Claude AI chat"],["✗","Unlimited builds"]].map(([i,f])=>(
+                  <div key={f} style={{fontSize:11,color:i==="✓"?"#c8c8ff":"#2a2a4a",display:"flex",gap:6,marginBottom:4}}><span style={{color:i==="✓"?"#4ade80":"#2a2a4a"}}>{i}</span>{f}</div>
                 ))}
               </div>
-              <button onClick={()=>setAuthPage("signup")}
-                style={{width:"100%",background:"transparent",border:"1px solid #2a2a4a",color:"#6060a0",padding:"12px 0",fontFamily:"monospace",fontSize:13,cursor:"pointer",borderRadius:8}}>
-                Get Started Free
-              </button>
-            </div>
-            {/* Pro plan */}
-            <div style={{background:"linear-gradient(135deg,#1a0a2e,#0d0d24)",border:"2px solid #7c6dfa",borderRadius:16,padding:28,position:"relative",overflow:"hidden"}}>
-              <div style={{position:"absolute",top:0,right:0,background:"linear-gradient(90deg,#7c6dfa,#a855f7)",color:"#fff",fontSize:9,fontWeight:900,padding:"5px 12px",borderRadius:"0 0 0 8px",letterSpacing:2}}>MOST POPULAR</div>
-              <div style={{fontSize:13,color:"#7c6dfa",letterSpacing:2,marginBottom:8}}>PRO</div>
-              <div style={{display:"flex",alignItems:"baseline",gap:4,marginBottom:4}}>
-                <span style={{fontSize:36,fontWeight:900,color:"#fff"}}>$12.99</span>
-                <span style={{fontSize:12,color:"#5050a0"}}>/month</span>
-              </div>
-              <div style={{fontSize:12,color:"#3a3a6a",marginBottom:20}}>cancel anytime</div>
-              <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
-                {[["∞","Unlimited tokens forever"],["∞","Unlimited saved projects"],["⚡","Priority AI generation"],["🎨","Live theme customisation"],["📋","Full build history"],["🛟","Priority support"]].map(([icon,feat])=>(
-                  <div key={feat} style={{fontSize:12,color:"#c8c8ff",display:"flex",gap:8}}>
-                    <span style={{color:"#4ade80"}}>{icon}</span>{feat}
-                  </div>
+              {/* Pro */}
+              <div style={{background:"linear-gradient(135deg,#1a0a2e,#0d0d24)",border:"2px solid #7c6dfa",borderRadius:14,padding:22,position:"relative"}}>
+                <div style={{position:"absolute",top:-9,right:12,background:"linear-gradient(90deg,#7c6dfa,#a855f7)",color:"#fff",fontSize:8,fontWeight:900,padding:"3px 10px",borderRadius:8,letterSpacing:1}}>POPULAR</div>
+                <div style={{fontSize:11,color:"#7c6dfa",letterSpacing:2,marginBottom:8}}>PRO</div>
+                <div style={{fontSize:28,fontWeight:900,color:"#fff",marginBottom:2}}>$12.99<span style={{fontSize:12,color:"#5050a0"}}>/mo</span></div>
+                <div style={{fontSize:10,color:"#3a3a6a",marginBottom:14}}>cancel anytime</div>
+                {[["✓","100,000 tokens/mo"],["✓","Unlimited projects"],["✓","Priority builds"],["✗","Claude AI chat"]].map(([i,f])=>(
+                  <div key={f} style={{fontSize:11,color:i==="✓"?"#c8c8ff":"#2a2a4a",display:"flex",gap:6,marginBottom:4}}><span style={{color:i==="✓"?"#4ade80":"#2a2a4a"}}>{i}</span>{f}</div>
                 ))}
+                <button onClick={()=>setView("payment")} style={{width:"100%",background:"linear-gradient(90deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:"10px 0",fontFamily:"monospace",fontSize:12,fontWeight:900,cursor:"pointer",borderRadius:7,marginTop:12}}>
+                  UPGRADE TO PRO →
+                </button>
               </div>
-              <button onClick={()=>{ setAuthPage("signup"); }}
-                style={{width:"100%",background:"linear-gradient(90deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:"13px 0",fontFamily:"monospace",fontSize:14,fontWeight:900,cursor:"pointer",borderRadius:8,letterSpacing:1,boxShadow:"0 4px 20px #7c6dfa40"}}>
-                START PRO →
-              </button>
+              {/* Ultimate */}
+              <div style={{background:"linear-gradient(135deg,#1a0800,#0d0d24)",border:"2px solid #f59e0b",borderRadius:14,padding:22,position:"relative"}}>
+                <div style={{position:"absolute",top:-9,right:12,background:"linear-gradient(90deg,#f59e0b,#ef4444)",color:"#fff",fontSize:8,fontWeight:900,padding:"3px 10px",borderRadius:8,letterSpacing:1}}>✦ BEST</div>
+                <div style={{fontSize:11,color:"#f59e0b",letterSpacing:2,marginBottom:8}}>ULTIMATE</div>
+                <div style={{fontSize:28,fontWeight:900,color:"#fff",marginBottom:2}}>$29.99<span style={{fontSize:12,color:"#5050a0"}}>/mo</span></div>
+                <div style={{fontSize:10,color:"#3a3a6a",marginBottom:14}}>cancel anytime</div>
+                {[["∞","Unlimited tokens"],["✓","Unlimited projects"],["🤖","Claude AI chatbot"],["⚡","All Pro features"]].map(([i,f])=>(
+                  <div key={f} style={{fontSize:11,color:"#c8c8ff",display:"flex",gap:6,marginBottom:4}}><span style={{color:"#f59e0b"}}>{i}</span>{f}</div>
+                ))}
+                <button onClick={()=>setView("payment")} style={{width:"100%",background:"linear-gradient(90deg,#f59e0b,#ef4444)",border:"none",color:"#fff",padding:"10px 0",fontFamily:"monospace",fontSize:12,fontWeight:900,cursor:"pointer",borderRadius:7,marginTop:12}}>
+                  GET ULTIMATE →
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
+
 
       </div>
 
@@ -554,25 +559,43 @@ Be concise and friendly.`;
       <div style={{background:C.panel,border:`2px solid ${C.accent}`,borderRadius:16,padding:40,maxWidth:400,width:"90%",textAlign:"center",boxShadow:`0 0 60px ${C.accent}40`}}>
         <div style={{fontSize:48,marginBottom:8}}>🚫</div>
         <div style={{fontSize:24,fontWeight:900,color:C.red,marginBottom:8}}>You ran out of tokens!</div>
-        <div style={{fontSize:13,color:C.muted,marginBottom:28,lineHeight:1.7}}>
-          Upgrade to <strong style={{color:C.accent}}>Forge Pro</strong> to keep building — unlimited tokens, forever.
+        <div style={{fontSize:13,color:C.muted,marginBottom:16,lineHeight:1.7}}>
+          Choose a plan to keep building:
         </div>
-        <div style={{background:"linear-gradient(135deg,#1a0a2e,#2a1040)",border:`2px solid ${C.accent}`,borderRadius:12,padding:"24px 20px",marginBottom:24,position:"relative",overflow:"hidden"}}>
-          <div style={{position:"absolute",top:0,right:0,background:C.accent,color:"#fff",fontSize:9,fontWeight:900,padding:"4px 10px",borderRadius:"0 0 0 8px",letterSpacing:2}}>MOST POPULAR</div>
-          <div style={{fontSize:13,color:C.muted,letterSpacing:3,marginBottom:8}}>FORGE PRO</div>
-          <div style={{fontSize:40,fontWeight:900,color:C.accent,marginBottom:4}}>{PRO_PRICE}</div>
-          <div style={{fontSize:11,color:C.muted,marginBottom:16}}>billed monthly · cancel anytime</div>
-          <div style={{display:"flex",flexDirection:"column",gap:8,textAlign:"left"}}>
-            {[["∞","Unlimited tokens — build forever"],["⚡","All app types, games & tools"],["🚀","Priority AI generation"],["📋","Full build history — unlimited projects"],["🎨","Live theme customisation"]].map(([icon,feat])=>(
-              <div key={feat} style={{fontSize:12,color:C.text,display:"flex",gap:8,alignItems:"center"}}>
-                <span style={{color:C.green,fontSize:14}}>{icon}</span><span>{feat}</span>
-              </div>
-            ))}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+          {/* PRO PLAN */}
+          <div style={{background:"linear-gradient(135deg,#1a0a2e,#0d0d24)",border:`1.5px solid ${C.accent}`,borderRadius:10,padding:16,position:"relative"}}>
+            <div style={{fontSize:10,color:C.accent,letterSpacing:2,marginBottom:6}}>PRO</div>
+            <div style={{fontSize:24,fontWeight:900,color:C.accent,marginBottom:2}}>{PRO_PRICE}</div>
+            <div style={{fontSize:9,color:C.muted,marginBottom:10}}>cancel anytime</div>
+            <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:12}}>
+              {[["⚡","100,000 tokens/mo"],["💾","Unlimited projects"],["🎮","All games & tools"],["🚀","Priority builds"]].map(([i,f])=>(
+                <div key={f} style={{fontSize:10,color:C.text,display:"flex",gap:5}}><span style={{color:C.green}}>{i}</span>{f}</div>
+              ))}
+              <div style={{fontSize:10,color:"#3a3a6a",display:"flex",gap:5}}><span>✗</span>Claude AI chat</div>
+            </div>
+            <button onClick={goToPayment}
+              style={{width:"100%",background:`linear-gradient(90deg,${C.accent},#a855f7)`,border:"none",color:"#fff",padding:"9px 0",fontFamily:"monospace",fontSize:11,fontWeight:900,cursor:"pointer",borderRadius:6,letterSpacing:1}}>
+              GET PRO →
+            </button>
+          </div>
+          {/* ULTIMATE PLAN */}
+          <div style={{background:"linear-gradient(135deg,#1a0800,#0d0d24)",border:"1.5px solid #f59e0b",borderRadius:10,padding:16,position:"relative"}}>
+            <div style={{position:"absolute",top:-8,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(90deg,#f59e0b,#ef4444)",color:"#fff",fontSize:8,fontWeight:900,padding:"3px 10px",borderRadius:10,letterSpacing:1,whiteSpace:"nowrap"}}>✦ BEST VALUE</div>
+            <div style={{fontSize:10,color:"#f59e0b",letterSpacing:2,marginBottom:6}}>ULTIMATE</div>
+            <div style={{fontSize:24,fontWeight:900,color:"#f59e0b",marginBottom:2}}>{ULTIMATE_PRICE}</div>
+            <div style={{fontSize:9,color:C.muted,marginBottom:10}}>cancel anytime</div>
+            <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:12}}>
+              {[["∞","Unlimited tokens"],["💾","Unlimited projects"],["🤖","Claude AI chatbot"],["⚡","All Pro features"],["🎯","Priority support"]].map(([i,f])=>(
+                <div key={f} style={{fontSize:10,color:C.text,display:"flex",gap:5}}><span style={{color:"#f59e0b"}}>{i}</span>{f}</div>
+              ))}
+            </div>
+            <button onClick={()=>{ setShowUpgrade(false); setView("payment"); }}
+              style={{width:"100%",background:"linear-gradient(90deg,#f59e0b,#ef4444)",border:"none",color:"#fff",padding:"9px 0",fontFamily:"monospace",fontSize:11,fontWeight:900,cursor:"pointer",borderRadius:6,letterSpacing:1}}>
+              GET ULTIMATE →
+            </button>
           </div>
         </div>
-        <button onClick={goToPayment} style={{width:"100%",background:`linear-gradient(90deg,${C.accent},#a855f7)`,border:"none",color:"#fff",padding:"15px 0",fontFamily:"monospace",fontSize:16,fontWeight:900,cursor:"pointer",borderRadius:8,letterSpacing:2,marginBottom:10,boxShadow:`0 4px 20px ${C.accent}60`}}>
-          UPGRADE TO PRO — {PRO_PRICE} →
-        </button>
         <button onClick={()=>setShowUpgrade(false)} style={{width:"100%",background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"10px 0",fontFamily:"monospace",fontSize:12,cursor:"pointer",borderRadius:6}}>
           Maybe later
         </button>
@@ -962,13 +985,19 @@ Be concise and friendly.`;
                             <div style={{fontSize:10,color:data.isPro?C.green:C.muted}}>{data.isPro?"⭐ PRO":"Free plan"}</div>
                           </div>
                         </div>
-                        <button onClick={()=>{ if(USER_STORE[username]) USER_STORE[username].isPro=!USER_STORE[username].isPro; setCalls(c=>c+0.001); }}
-                          style={{background:data.isPro?C.panel:C.accentDim,border:`1px solid ${data.isPro?C.border:C.accent}`,color:data.isPro?C.muted:C.accent,padding:"4px 10px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:4}}>
-                          {data.isPro?"Revoke Pro":"Grant Pro"}
-                        </button>
+                        <div style={{display:"flex",gap:4}}>
+                          <button onClick={()=>{ if(USER_STORE[username]){USER_STORE[username].isPro=!USER_STORE[username].isPro; if(USER_STORE[username].isPro) USER_STORE[username].isUltimate=false;} setCalls(c=>c+0.001); }}
+                            style={{background:data.isPro?C.panel:C.accentDim,border:`1px solid ${data.isPro?C.border:C.accent}`,color:data.isPro?C.muted:C.accent,padding:"4px 8px",fontFamily:"monospace",fontSize:9,cursor:"pointer",borderRadius:4}}>
+                            {data.isPro?"✗ Pro":"+ Pro"}
+                          </button>
+                          <button onClick={()=>{ if(USER_STORE[username]){USER_STORE[username].isUltimate=!USER_STORE[username].isUltimate; if(USER_STORE[username].isUltimate) USER_STORE[username].isPro=false;} setCalls(c=>c+0.001); }}
+                            style={{background:data.isUltimate?"#1a0800":"transparent",border:`1px solid ${data.isUltimate?"#f59e0b":"#2a2a4a"}`,color:data.isUltimate?"#f59e0b":"#4040a0",padding:"4px 8px",fontFamily:"monospace",fontSize:9,cursor:"pointer",borderRadius:4}}>
+                            {data.isUltimate?"✗ Ult":"+ Ult"}
+                          </button>
+                        </div>
                       </div>
                       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                        {[["EMAIL",data.email||"—"],["PASSWORD",data.pass],["PROJECTS",`${(data.projects||[]).length} saved`],["PLAN",data.isPro?"✅ Pro":"Free"]].map(([k,v])=>(
+                        {[["EMAIL",data.email||"—"],["PASSWORD",data.pass],["PROJECTS",`${(data.projects||[]).length} saved`],["PLAN",data.isUltimate?"✦ Ultimate":data.isPro?"✅ Pro":"Free"]].map(([k,v])=>(
                           <div key={k} style={{background:C.bg,border:`1px solid ${C.border}`,padding:"8px 10px",borderRadius:6}}>
                             <div style={{fontSize:9,color:C.muted,letterSpacing:1,marginBottom:2}}>{k}</div>
                             <div style={{fontSize:12,color:C.text,fontFamily:"monospace",wordBreak:"break-all"}}>{v}</div>
@@ -1113,8 +1142,8 @@ Be concise and friendly.`;
             <div style={{width:60,height:5,background:C.border,borderRadius:3,overflow:"hidden"}}>
               <div style={{width:`${Math.min(100,(tokens/FREE_CREDIT_LIMIT)*100)}%`,height:"100%",background:tokens>=(FREE_CREDIT_LIMIT*0.8)?C.red:C.accent,borderRadius:3,transition:"width 0.3s"}}/>
             </div>
-            <span style={{fontSize:9,color:tokens>=FREE_CREDIT_LIMIT?C.red:tokens>=(FREE_CREDIT_LIMIT*0.8)?"#f97316":C.muted}}>
-              {tokens>=FREE_CREDIT_LIMIT?"OUT OF TOKENS ⚠️":`${tokens.toLocaleString()}/${FREE_CREDIT_LIMIT.toLocaleString()}`}
+            <span style={{fontSize:9,color:tokens>=(isPro?PRO_CREDIT_LIMIT:FREE_CREDIT_LIMIT)?C.red:C.muted}}>
+              {tokens>=(isPro?PRO_CREDIT_LIMIT:FREE_CREDIT_LIMIT)?"OUT OF TOKENS ⚠️":`${tokens.toLocaleString()}/${(isPro?PRO_CREDIT_LIMIT:FREE_CREDIT_LIMIT).toLocaleString()}`}
             </span>
           </div>
         )}
@@ -1126,15 +1155,15 @@ Be concise and friendly.`;
         )}
         <span style={{fontSize:10,color:C.muted}}>👤 {currentUser}</span>
         <button onClick={()=>setView("home")} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"5px 10px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:3}}>🏠</button>
-        {(isAdmin||isPro) ? (
+        {(isAdmin||isUltimate) ? (
           <button onClick={()=>setView("claude")}
-            style={{background:"linear-gradient(90deg,#a855f720,#7c6dfa20)",border:"1px solid #7c6dfa",color:"#a855f7",padding:"5px 14px",fontFamily:"monospace",fontSize:10,cursor:"pointer",fontWeight:700,borderRadius:6,display:"flex",alignItems:"center",gap:5}}>
-            🤖 Claude AI
+            style={{background:"linear-gradient(90deg,#f59e0b20,#ef444420)",border:"1px solid #f59e0b",color:"#f59e0b",padding:"5px 14px",fontFamily:"monospace",fontSize:10,cursor:"pointer",fontWeight:700,borderRadius:6,display:"flex",alignItems:"center",gap:5}}>
+            🤖 Claude AI ✦
           </button>
         ) : (
           <button onClick={()=>setShowUpgrade(true)}
-            style={{background:"#1a1a2a",border:"1px solid #2a2a4a",color:"#4040a0",padding:"5px 14px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:6,display:"flex",alignItems:"center",gap:5,position:"relative"}}>
-            🔒 Claude AI <span style={{fontSize:8,color:"#7c6dfa",marginLeft:2}}>PRO</span>
+            style={{background:"#1a1a2a",border:"1px solid #2a2a4a",color:"#4040a0",padding:"5px 14px",fontFamily:"monospace",fontSize:10,cursor:"pointer",borderRadius:6,display:"flex",alignItems:"center",gap:5}}>
+            🔒 Claude AI <span style={{fontSize:8,color:"#f59e0b",marginLeft:2}}>ULTIMATE</span>
           </button>
         )}
         {isAdmin&&<button onClick={()=>setView("admin")} style={{background:C.accentDim,border:`1px solid ${C.accent}`,color:C.accent,padding:"5px 14px",fontFamily:"monospace",fontSize:10,cursor:"pointer",fontWeight:700,borderRadius:3}}>⚙ ADMIN</button>}
