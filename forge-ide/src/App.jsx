@@ -271,16 +271,29 @@ Be concise and friendly.`;
     setClaudeChat(m=>[...m,{role:"user",content:p}]);
     setClaudeLoading(true);
     try {
-      const r = await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:4096,
-          system:"You are Claude Opus 4.7, a helpful AI assistant inside Forge IDE. Be friendly, concise and helpful. You can help with coding, ideas, debugging, and general questions.",
+      const r = await fetch("/api/chat",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          model:CLAUDE_MODEL,
+          max_tokens:2048,
+          system:"You are Claude, a helpful AI assistant inside Forge IDE. Be friendly, concise and helpful.",
           messages:[...claudeChat.map(m=>({role:m.role,content:m.content})),{role:"user",content:p}]
         })
       });
       const data = await r.json();
-      const reply = data.content?.filter(b=>b.type==="text").map(b=>b.text||"").join("")||"Sorry, I couldn't respond.";
-      setClaudeChat(m=>[...m,{role:"assistant",content:reply}]);
-    } catch(e){ setClaudeChat(m=>[...m,{role:"assistant",content:`⚠️ ${e.message}`}]); }
+      if(!r.ok) {
+        setClaudeChat(m=>[...m,{role:"assistant",content:`⚠️ API Error ${r.status}: ${data.error||"Unknown error"}`}]);
+        setClaudeLoading(false);
+        return;
+      }
+      const reply = data.content?.filter(b=>b.type==="text").map(b=>b.text||"").join("")
+                  || data.content?.map(b=>b.text||"").join("")
+                  || "No response received.";
+      setClaudeChat(m=>[...m,{role:"assistant",content:reply||"Empty response from API."}]);
+    } catch(e){
+      setClaudeChat(m=>[...m,{role:"assistant",content:`⚠️ Network error: ${e.message}`}]);
+    }
     setClaudeLoading(false);
   };
 
