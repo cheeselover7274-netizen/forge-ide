@@ -441,49 +441,6 @@ Be concise and friendly.`;
             </div>
           ))}
         </div>
-        <div style={{fontSize:10,color:"#2a2a4a",marginBottom:48}}>*Free plan: 4,000 tokens · Pro: 100,000 tokens · Ultimate: unlimited</div>
-
-        {/* PRICING - only shows when logged in */}
-        {!isAdmin&&(
-          <div style={{width:"100%",maxWidth:800,marginBottom:48}}>
-            <div style={{textAlign:"center",marginBottom:28}}>
-              <div style={{fontSize:11,color:"#7c6dfa",letterSpacing:3,marginBottom:6}}>UPGRADE</div>
-              <div style={{fontSize:"clamp(1.3rem,3vw,1.8rem)",fontWeight:900,color:"#fff",marginBottom:6}}>Power up your Forge</div>
-              <div style={{fontSize:12,color:"#5050a0"}}>Pick the plan that fits you</div>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:14}}>
-              <div style={{background:"#0d0d24",border:"1px solid #1e1e40",borderRadius:14,padding:22}}>
-                <div style={{fontSize:11,color:"#5050a0",letterSpacing:2,marginBottom:8}}>FREE</div>
-                <div style={{fontSize:28,fontWeight:900,color:"#fff",marginBottom:2}}>$0</div>
-                <div style={{fontSize:10,color:"#3a3a6a",marginBottom:14}}>forever</div>
-                {[["✓","4,000 tokens"],["✓","2 saved projects"],["✗","Claude AI chat"],["✗","Unlimited builds"]].map(([i,f])=>(
-                  <div key={f} style={{fontSize:11,color:i==="✓"?"#c8c8ff":"#2a2a4a",display:"flex",gap:6,marginBottom:4}}><span style={{color:i==="✓"?"#4ade80":"#2a2a4a"}}>{i}</span>{f}</div>
-                ))}
-              </div>
-              <div style={{background:"linear-gradient(135deg,#1a0a2e,#0d0d24)",border:"2px solid #7c6dfa",borderRadius:14,padding:22,position:"relative"}}>
-                <div style={{position:"absolute",top:-9,right:12,background:"linear-gradient(90deg,#7c6dfa,#a855f7)",color:"#fff",fontSize:8,fontWeight:900,padding:"3px 10px",borderRadius:8,letterSpacing:1,whiteSpace:"nowrap"}}>POPULAR</div>
-                <div style={{fontSize:11,color:"#7c6dfa",letterSpacing:2,marginBottom:8}}>PRO</div>
-                <div style={{fontSize:28,fontWeight:900,color:"#fff",marginBottom:2}}>$12.99<span style={{fontSize:12,color:"#5050a0"}}>/mo</span></div>
-                <div style={{fontSize:10,color:"#3a3a6a",marginBottom:14}}>cancel anytime</div>
-                {[["✓","100,000 tokens/mo"],["✓","Unlimited projects"],["✓","Priority builds"],["✗","Claude AI chat"]].map(([i,f])=>(
-                  <div key={f} style={{fontSize:11,color:i==="✓"?"#c8c8ff":"#2a2a4a",display:"flex",gap:6,marginBottom:4}}><span style={{color:i==="✓"?"#4ade80":"#2a2a4a"}}>{i}</span>{f}</div>
-                ))}
-                <button onClick={()=>setView("payment")} style={{width:"100%",background:"linear-gradient(90deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:"10px 0",fontFamily:"monospace",fontSize:12,fontWeight:900,cursor:"pointer",borderRadius:7,marginTop:12,letterSpacing:1}}>UPGRADE TO PRO →</button>
-              </div>
-              <div style={{background:"linear-gradient(135deg,#1a0800,#0d0d24)",border:"2px solid #f59e0b",borderRadius:14,padding:22,position:"relative"}}>
-                <div style={{position:"absolute",top:-9,right:12,background:"linear-gradient(90deg,#f59e0b,#ef4444)",color:"#fff",fontSize:8,fontWeight:900,padding:"3px 10px",borderRadius:8,letterSpacing:1,whiteSpace:"nowrap"}}>✦ BEST VALUE</div>
-                <div style={{fontSize:11,color:"#f59e0b",letterSpacing:2,marginBottom:8}}>ULTIMATE</div>
-                <div style={{fontSize:28,fontWeight:900,color:"#fff",marginBottom:2}}>$29.99<span style={{fontSize:12,color:"#5050a0"}}>/mo</span></div>
-                <div style={{fontSize:10,color:"#3a3a6a",marginBottom:14}}>cancel anytime</div>
-                {[["∞","Unlimited tokens forever"],["🤖","Claude Opus AI chatbot"],["✓","Unlimited projects"],["⚡","Everything in Pro"]].map(([i,f])=>(
-                  <div key={f} style={{fontSize:11,color:"#c8c8ff",display:"flex",gap:6,marginBottom:4}}><span style={{color:"#f59e0b"}}>{i}</span>{f}</div>
-                ))}
-                <button onClick={()=>setView("payment")} style={{width:"100%",background:"linear-gradient(90deg,#f59e0b,#ef4444)",border:"none",color:"#fff",padding:"10px 0",fontFamily:"monospace",fontSize:12,fontWeight:900,cursor:"pointer",borderRadius:7,marginTop:12,letterSpacing:1}}>GET ULTIMATE ✦ →</button>
-              </div>
-            </div>
-          </div>
-        )}
-
       </div>
 
       {/* AUTH MODAL */}
@@ -798,7 +755,47 @@ Be concise and friendly.`;
           ))}
         </div>
 
-        <div style={{fontSize:10,color:"#2a2a4a"}}>*Free plan: 4,000 tokens · Pro plan: unlimited</div>
+        <div style={{fontSize:10,color:"#2a2a4a",marginBottom:48}}>*Free plan: 4,000 tokens · Pro: 100,000 tokens · Ultimate: unlimited</div>
+
+        {/* UPGRADE PLANS - only for non-admin logged-in users */}
+        {!isAdmin&&(
+          <div style={{width:"100%",maxWidth:800,marginBottom:60}}>
+            <div style={{textAlign:"center",marginBottom:24}}>
+              <div style={{fontSize:11,color:"#7c6dfa",letterSpacing:3,marginBottom:6}}>UPGRADE</div>
+              <div style={{fontSize:"clamp(1.3rem,3vw,1.8rem)",fontWeight:900,color:"#fff",marginBottom:6}}>Power up your Forge</div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:14}}>
+              <div style={{background:"#0d0d24",border:"1px solid #1e1e40",borderRadius:14,padding:22}}>
+                <div style={{fontSize:11,color:"#5050a0",letterSpacing:2,marginBottom:8}}>FREE</div>
+                <div style={{fontSize:28,fontWeight:900,color:"#fff",marginBottom:2}}>$0</div>
+                <div style={{fontSize:10,color:"#3a3a6a",marginBottom:14}}>forever</div>
+                {[["✓","4,000 tokens"],["✓","2 saved projects"],["✗","Claude AI chat"],["✗","Unlimited builds"]].map(([i,f])=>(
+                  <div key={f} style={{fontSize:11,color:i==="✓"?"#c8c8ff":"#2a2a4a",display:"flex",gap:6,marginBottom:4}}><span style={{color:i==="✓"?"#4ade80":"#2a2a4a"}}>{i}</span>{f}</div>
+                ))}
+              </div>
+              <div style={{background:"linear-gradient(135deg,#1a0a2e,#0d0d24)",border:"2px solid #7c6dfa",borderRadius:14,padding:22,position:"relative"}}>
+                <div style={{position:"absolute",top:-9,right:12,background:"linear-gradient(90deg,#7c6dfa,#a855f7)",color:"#fff",fontSize:8,fontWeight:900,padding:"3px 10px",borderRadius:8,letterSpacing:1,whiteSpace:"nowrap"}}>POPULAR</div>
+                <div style={{fontSize:11,color:"#7c6dfa",letterSpacing:2,marginBottom:8}}>PRO</div>
+                <div style={{fontSize:28,fontWeight:900,color:"#fff",marginBottom:2}}>$12.99<span style={{fontSize:12,color:"#5050a0"}}>/mo</span></div>
+                <div style={{fontSize:10,color:"#3a3a6a",marginBottom:14}}>cancel anytime</div>
+                {[["✓","100,000 tokens/mo"],["✓","Unlimited projects"],["✓","Priority builds"],["✗","Claude AI chat"]].map(([i,f])=>(
+                  <div key={f} style={{fontSize:11,color:i==="✓"?"#c8c8ff":"#2a2a4a",display:"flex",gap:6,marginBottom:4}}><span style={{color:i==="✓"?"#4ade80":"#2a2a4a"}}>{i}</span>{f}</div>
+                ))}
+                <button onClick={()=>setView("payment")} style={{width:"100%",background:"linear-gradient(90deg,#7c6dfa,#a855f7)",border:"none",color:"#fff",padding:"10px 0",fontFamily:"monospace",fontSize:12,fontWeight:900,cursor:"pointer",borderRadius:7,marginTop:12,letterSpacing:1}}>UPGRADE TO PRO →</button>
+              </div>
+              <div style={{background:"linear-gradient(135deg,#1a0800,#0d0d24)",border:"2px solid #f59e0b",borderRadius:14,padding:22,position:"relative"}}>
+                <div style={{position:"absolute",top:-9,right:12,background:"linear-gradient(90deg,#f59e0b,#ef4444)",color:"#fff",fontSize:8,fontWeight:900,padding:"3px 10px",borderRadius:8,letterSpacing:1,whiteSpace:"nowrap"}}>✦ BEST</div>
+                <div style={{fontSize:11,color:"#f59e0b",letterSpacing:2,marginBottom:8}}>ULTIMATE</div>
+                <div style={{fontSize:28,fontWeight:900,color:"#fff",marginBottom:2}}>$29.99<span style={{fontSize:12,color:"#5050a0"}}>/mo</span></div>
+                <div style={{fontSize:10,color:"#3a3a6a",marginBottom:14}}>cancel anytime</div>
+                {[["∞","Unlimited tokens"],["🤖","Claude Opus AI chat"],["✓","Unlimited projects"],["⚡","Everything in Pro"]].map(([i,f])=>(
+                  <div key={f} style={{fontSize:11,color:"#c8c8ff",display:"flex",gap:6,marginBottom:4}}><span style={{color:"#f59e0b"}}>{i}</span>{f}</div>
+                ))}
+                <button onClick={()=>setView("payment")} style={{width:"100%",background:"linear-gradient(90deg,#f59e0b,#ef4444)",border:"none",color:"#fff",padding:"10px 0",fontFamily:"monospace",fontSize:12,fontWeight:900,cursor:"pointer",borderRadius:7,marginTop:12,letterSpacing:1}}>GET ULTIMATE ✦ →</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <style>{`
