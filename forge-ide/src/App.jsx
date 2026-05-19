@@ -2,8 +2,17 @@ import { useState, useRef, useEffect } from "react";
 
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "forge2024";
-const MODEL = "claude-sonnet-4-6";
 const FREE_CREDIT_LIMIT = 4000;
+
+const MODEL_OPTIONS = [
+  { id: "claude-sonnet-4-6", label: "Claude Sonnet 4.6", provider: "anthropic", badge: "⚡" },
+  { id: "claude-opus-4-6", label: "Claude Opus 4.6", provider: "anthropic", badge: "🧠" },
+  { id: "mistral", label: "Claude Code (Ollama)", provider: "ollama", badge: "🖥️" },
+  { id: "glm-4.7-flash", label: "GLM Flash (Ollama)", provider: "ollama", badge: "🖥️" },
+  { id: "gemini-2.0-flash", label: "Gemini 2.0 Flash", provider: "gemini", badge: "✨" },
+  { id: "gemini-2.5-pro", label: "Gemini 2.5 Pro", provider: "gemini", badge: "💎" },
+  { id: "gemini-1.5-pro", label: "Gemini 1.5 Pro", provider: "gemini", badge: "🌟" },
+];
 const PRO_CREDIT_LIMIT = 100000;
 const PRO_PRICE = "$12.99/mo";
 const ULTIMATE_PRICE = "$29.99/mo";
@@ -126,6 +135,7 @@ export default function App() {
   const [activeProject, setActiveProject] = useState(null); // null = new chat
   const [input, setInput] = useState("");
   const [homeInput, setHomeInput] = useState("");
+  const [selectedModel, setSelectedModel] = useState(MODEL_OPTIONS[0]);
   const [loading, setLoading] = useState(false);
   const [buildSteps, setBuildSteps] = useState([]);
   const [adminMsgs, setAdminMsgs] = useState([{role:"assistant",content:"Hello Admin 👋\n\nI'm running on Claude Sonnet 4.6. I can change the IDE colours and theme in real time!\n\nTry: \"Change theme to dark\" or \"Make the accent orange\""}]);
@@ -158,7 +168,7 @@ export default function App() {
   useEffect(()=>{ adminEnd.current?.scrollIntoView({behavior:"smooth"}); },[adminMsgs,adminLoading]);
 
   const callAPI = async (system, messages) => {
-    const r = await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:MODEL,max_tokens:4096,system,messages})});
+    const r = await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:selectedModel.id,provider:selectedModel.provider,max_tokens:4096,system,messages})});
     const data = await r.json();
     if(!r.ok) throw new Error(data.error || `API error ${r.status}`);
     return data;
@@ -1271,6 +1281,14 @@ Be concise and friendly.`;
             <div ref={chatEnd}/>
           </div>
           <div style={{padding:"8px 12px 10px",borderTop:`1px solid ${C.border}`,background:C.sidebar,flexShrink:0}}>
+            <div style={{display:"flex",gap:6,marginBottom:6,flexWrap:"wrap"}}>
+              {MODEL_OPTIONS.map(m=>(
+                <button key={m.id} onClick={()=>setSelectedModel(m)}
+                  style={{background:selectedModel.id===m.id?C.accent:"transparent",border:`1px solid ${selectedModel.id===m.id?C.accent:C.border}`,color:selectedModel.id===m.id?"#fff":C.muted,padding:"3px 8px",borderRadius:6,fontSize:11,fontFamily:"monospace",cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
+                  {m.badge} {m.label}
+                </button>
+              ))}
+            </div>
             <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
               <div style={{flex:1,background:C.inputBg,border:`2px solid ${input.trim()?C.accent:C.border}`,borderRadius:8,transition:"border-color 0.2s"}}>
                 <textarea ref={inputRef} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={handleKey}
