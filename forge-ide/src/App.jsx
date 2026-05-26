@@ -1034,7 +1034,7 @@ Be concise and friendly.`;
             <div style={{flex:1,overflowY:"auto",padding:"22px 26px"}}>
               <div style={{fontSize:20,fontWeight:900,color:C.accent,marginBottom:20}}>Settings</div>
               <div style={{background:C.panel,border:`1px solid ${C.border}`,padding:20,borderRadius:8,marginBottom:16}}>
-                {[["Model",MODEL],["Admin User",ADMIN_USER],["API Route","/api/chat"],["Version","Forge v21"]].map(([k,v])=>(
+                {[["Model",MODEL],["Admin User",ADMIN_USER],["API Route","/api/chat"],["Version","Forge v41"]].map(([k,v])=>(
                   <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:`1px solid ${C.border}`}}>
                     <span style={{fontSize:13,color:C.muted}}>{k}</span>
                     <span style={{fontSize:13,color:C.accent}}>{v}</span>
