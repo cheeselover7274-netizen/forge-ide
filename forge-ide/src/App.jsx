@@ -1281,10 +1281,10 @@ Be concise and friendly.`;
             <div ref={chatEnd}/>
           </div>
           <div style={{padding:"8px 12px 10px",borderTop:`1px solid ${C.border}`,background:C.sidebar,flexShrink:0}}>
-            <div style={{display:"flex",gap:6,marginBottom:6,flexWrap:"wrap"}}>
+            <div style={{display:"flex",gap:6,marginBottom:8,flexWrap:"wrap",padding:"6px 0"}}>
               {MODEL_OPTIONS.map(m=>(
                 <button key={m.id} onClick={()=>setSelectedModel(m)}
-                  style={{background:selectedModel.id===m.id?C.accent:"transparent",border:`1px solid ${selectedModel.id===m.id?C.accent:C.border}`,color:selectedModel.id===m.id?"#fff":C.muted,padding:"3px 8px",borderRadius:6,fontSize:11,fontFamily:"monospace",cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
+                  style={{background:selectedModel.id===m.id?C.accent:"#1a1a2e",border:`1px solid ${selectedModel.id===m.id?C.accent:"#444488"}`,color:selectedModel.id===m.id?"#fff":"#aaaacc",padding:"4px 10px",borderRadius:6,fontSize:11,fontFamily:"monospace",cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontWeight:selectedModel.id===m.id?700:400}}>
                   {m.badge} {m.label}
                 </button>
               ))}
