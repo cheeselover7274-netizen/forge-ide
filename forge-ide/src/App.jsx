@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 
-const FORGE_VERSION = "v44";
+const FORGE_VERSION = "v45";
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "forge2024";
 const FREE_CREDIT_LIMIT = 4000;
@@ -8,18 +8,19 @@ const FREE_CREDIT_LIMIT = 4000;
 const MODEL_OPTIONS = [
   { id: "claude-sonnet-4-6", label: "Claude Sonnet 4.6", provider: "anthropic", badge: "⚡", group: "Anthropic" },
   { id: "claude-opus-4-6", label: "Claude Opus 4.6", provider: "anthropic", badge: "🧠", group: "Anthropic" },
-  { id: "gemini-2.0-flash", label: "Gemini 2.0 Flash", provider: "gemini", badge: "✨", group: "Google (Free)" },
-  { id: "gemini-2.5-pro", label: "Gemini 2.5 Pro", provider: "gemini", badge: "💎", group: "Google (Free)" },
-  { id: "gemini-1.5-pro", label: "Gemini 1.5 Pro", provider: "gemini", badge: "🌟", group: "Google (Free)" },
+  { id: "gemini-2.0-flash-exp", label: "Gemini 2.0 Flash", provider: "gemini", badge: "✨", group: "Google (Free)" },
+  { id: "gemini-1.5-flash", label: "Gemini 1.5 Flash", provider: "gemini", badge: "⚡", group: "Google (Free)" },
+  { id: "gemini-1.5-pro", label: "Gemini 1.5 Pro", provider: "gemini", badge: "💎", group: "Google (Free)" },
   { id: "llama-3.3-70b-versatile", label: "Llama 3.3 70B", provider: "groq", badge: "🦙", group: "Groq (Free)" },
   { id: "llama-3.1-8b-instant", label: "Llama 3.1 8B", provider: "groq", badge: "⚡", group: "Groq (Free)" },
-  { id: "mixtral-8x7b-32768", label: "Mixtral 8x7B", provider: "groq", badge: "🔀", group: "Groq (Free)" },
-  { id: "gemma2-9b-it", label: "Gemma 2 9B", provider: "groq", badge: "💠", group: "Groq (Free)" },
+  { id: "llama3-70b-8192", label: "Llama 3 70B", provider: "groq", badge: "🦙", group: "Groq (Free)" },
+  { id: "llama3-8b-8192", label: "Llama 3 8B", provider: "groq", badge: "💠", group: "Groq (Free)" },
   { id: "meta-llama/llama-3.3-70b-instruct:free", label: "Llama 3.3 70B", provider: "openrouter", badge: "🦙", group: "OpenRouter (Free)" },
   { id: "mistralai/mistral-7b-instruct:free", label: "Mistral 7B", provider: "openrouter", badge: "🌬️", group: "OpenRouter (Free)" },
   { id: "google/gemma-3-27b-it:free", label: "Gemma 3 27B", provider: "openrouter", badge: "💠", group: "OpenRouter (Free)" },
-  { id: "deepseek/deepseek-r1:free", label: "DeepSeek R1", provider: "openrouter", badge: "🔍", group: "OpenRouter (Free)" },
-  { id: "command-r-plus", label: "Command R+", provider: "cohere", badge: "🎯", group: "Cohere (Free)" },
+  { id: "deepseek/deepseek-chat-v3-0324:free", label: "DeepSeek V3", provider: "openrouter", badge: "🔍", group: "OpenRouter (Free)" },
+  { id: "qwen/qwen3-8b:free", label: "Qwen 3 8B", provider: "openrouter", badge: "🌸", group: "OpenRouter (Free)" },
+  { id: "command-a-03-2025", label: "Command A", provider: "cohere", badge: "🎯", group: "Cohere (Free)" },
   { id: "command-r7b-12-2024", label: "Command R7B", provider: "cohere", badge: "🎯", group: "Cohere (Free)" },
 ];
 const PRO_CREDIT_LIMIT = 100000;
