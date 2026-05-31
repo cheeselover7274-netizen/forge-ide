@@ -1,18 +1,26 @@
 import { useState, useRef, useEffect } from "react";
 
-const FORGE_VERSION = "v43";
+const FORGE_VERSION = "v44";
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "forge2024";
 const FREE_CREDIT_LIMIT = 4000;
 
 const MODEL_OPTIONS = [
-  { id: "claude-sonnet-4-6", label: "Claude Sonnet 4.6", provider: "anthropic", badge: "⚡" },
-  { id: "claude-opus-4-6", label: "Claude Opus 4.6", provider: "anthropic", badge: "🧠" },
-  { id: "mistral", label: "Claude Code (Ollama)", provider: "ollama", badge: "🖥️" },
-  { id: "glm-4.7-flash", label: "GLM Flash (Ollama)", provider: "ollama", badge: "🖥️" },
-  { id: "gemini-2.0-flash", label: "Gemini 2.0 Flash", provider: "gemini", badge: "✨" },
-  { id: "gemini-2.5-pro", label: "Gemini 2.5 Pro", provider: "gemini", badge: "💎" },
-  { id: "gemini-1.5-pro", label: "Gemini 1.5 Pro", provider: "gemini", badge: "🌟" },
+  { id: "claude-sonnet-4-6", label: "Claude Sonnet 4.6", provider: "anthropic", badge: "⚡", group: "Anthropic" },
+  { id: "claude-opus-4-6", label: "Claude Opus 4.6", provider: "anthropic", badge: "🧠", group: "Anthropic" },
+  { id: "gemini-2.0-flash", label: "Gemini 2.0 Flash", provider: "gemini", badge: "✨", group: "Google (Free)" },
+  { id: "gemini-2.5-pro", label: "Gemini 2.5 Pro", provider: "gemini", badge: "💎", group: "Google (Free)" },
+  { id: "gemini-1.5-pro", label: "Gemini 1.5 Pro", provider: "gemini", badge: "🌟", group: "Google (Free)" },
+  { id: "llama-3.3-70b-versatile", label: "Llama 3.3 70B", provider: "groq", badge: "🦙", group: "Groq (Free)" },
+  { id: "llama-3.1-8b-instant", label: "Llama 3.1 8B", provider: "groq", badge: "⚡", group: "Groq (Free)" },
+  { id: "mixtral-8x7b-32768", label: "Mixtral 8x7B", provider: "groq", badge: "🔀", group: "Groq (Free)" },
+  { id: "gemma2-9b-it", label: "Gemma 2 9B", provider: "groq", badge: "💠", group: "Groq (Free)" },
+  { id: "meta-llama/llama-3.3-70b-instruct:free", label: "Llama 3.3 70B", provider: "openrouter", badge: "🦙", group: "OpenRouter (Free)" },
+  { id: "mistralai/mistral-7b-instruct:free", label: "Mistral 7B", provider: "openrouter", badge: "🌬️", group: "OpenRouter (Free)" },
+  { id: "google/gemma-3-27b-it:free", label: "Gemma 3 27B", provider: "openrouter", badge: "💠", group: "OpenRouter (Free)" },
+  { id: "deepseek/deepseek-r1:free", label: "DeepSeek R1", provider: "openrouter", badge: "🔍", group: "OpenRouter (Free)" },
+  { id: "command-r-plus", label: "Command R+", provider: "cohere", badge: "🎯", group: "Cohere (Free)" },
+  { id: "command-r7b-12-2024", label: "Command R7B", provider: "cohere", badge: "🎯", group: "Cohere (Free)" },
 ];
 const PRO_CREDIT_LIMIT = 100000;
 const PRO_PRICE = "$12.99/mo";
@@ -137,6 +145,7 @@ export default function App() {
   const [input, setInput] = useState("");
   const [homeInput, setHomeInput] = useState("");
   const [selectedModel, setSelectedModel] = useState(MODEL_OPTIONS[0]);
+  const [modelOpen, setModelOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [buildSteps, setBuildSteps] = useState([]);
   const [adminMsgs, setAdminMsgs] = useState([{role:"assistant",content:"Hello Admin 👋\n\nI'm running on Claude Sonnet 4.6. I can change the IDE colours and theme in real time!\n\nTry: \"Change theme to dark\" or \"Make the accent orange\""}]);
@@ -1282,13 +1291,25 @@ Be concise and friendly.`;
             <div ref={chatEnd}/>
           </div>
           <div style={{padding:"8px 12px 10px",borderTop:`1px solid ${C.border}`,background:C.sidebar,flexShrink:0}}>
-            <div style={{display:"flex",gap:6,marginBottom:8,flexWrap:"wrap",padding:"6px 0"}}>
-              {MODEL_OPTIONS.map(m=>(
-                <button key={m.id} onClick={()=>setSelectedModel(m)}
-                  style={{background:selectedModel.id===m.id?C.accent:"#1a1a2e",border:`1px solid ${selectedModel.id===m.id?C.accent:"#444488"}`,color:selectedModel.id===m.id?"#fff":"#aaaacc",padding:"4px 10px",borderRadius:6,fontSize:11,fontFamily:"monospace",cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontWeight:selectedModel.id===m.id?700:400}}>
-                  {m.badge} {m.label}
-                </button>
-              ))}
+            <div style={{position:"relative",marginBottom:8}}>
+              <button onClick={()=>setModelOpen(o=>!o)} style={{background:"#1a1a2e",border:`1px solid ${C.accent}`,color:"#fff",padding:"5px 12px",borderRadius:6,fontSize:11,fontFamily:"monospace",cursor:"pointer",display:"flex",alignItems:"center",gap:6,width:"100%",justifyContent:"space-between"}}>
+                <span>{selectedModel.badge} {selectedModel.label}</span>
+                <span style={{fontSize:9,opacity:0.7}}>{modelOpen?"▲":"▼"} change model</span>
+              </button>
+              {modelOpen&&(
+                <div style={{position:"absolute",bottom:"110%",left:0,right:0,background:"#0d0d1a",border:`1px solid ${C.accent}`,borderRadius:8,zIndex:999,maxHeight:320,overflowY:"auto",boxShadow:"0 -8px 24px rgba(0,0,0,0.6)"}}>
+                  {Object.entries(MODEL_OPTIONS.reduce((acc,m)=>{(acc[m.group]=acc[m.group]||[]).push(m);return acc},{})).map(([group,models])=>(
+                    <div key={group}>
+                      <div style={{fontSize:9,color:"#5555aa",padding:"6px 12px 2px",letterSpacing:2,fontFamily:"monospace"}}>{group.toUpperCase()}</div>
+                      {models.map(m=>(
+                        <button key={m.id} onClick={()=>{setSelectedModel(m);setModelOpen(false);}} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"7px 14px",background:selectedModel.id===m.id?C.accent:"transparent",border:"none",color:selectedModel.id===m.id?"#fff":"#aaaacc",fontSize:11,fontFamily:"monospace",cursor:"pointer",textAlign:"left"}}>
+                          {m.badge} {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
               <div style={{flex:1,background:C.inputBg,border:`2px solid ${input.trim()?C.accent:C.border}`,borderRadius:8,transition:"border-color 0.2s"}}>
