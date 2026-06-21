@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+build/
+.env*
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vercel
+/home/jules/verification/
+/home/jules/self_created_tools/
+next_dev.log

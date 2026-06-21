@@ -1,20 +1,59 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-:root {
-  --background: #0B0F19;
-  --foreground: #ffffff;
+@theme {
+  --color-background: #030712;
+  --color-foreground: #f9fafb;
+  --color-card: #0b1120;
+  --color-card-foreground: #f9fafb;
+  --color-popover: #0b1120;
+  --color-popover-foreground: #f9fafb;
+  --color-primary: #3b82f6;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #1f2937;
+  --color-secondary-foreground: #f9fafb;
+  --color-muted: #1f2937;
+  --color-muted-foreground: #9ca3af;
+  --color-accent: #1f2937;
+  --color-accent-foreground: #f9fafb;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #f9fafb;
+  --color-border: #1f2937;
+  --color-input: #1f2937;
+  --color-ring: #3b82f6;
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: var(--font-geist-sans), sans-serif;
+@utility glass {
+  background-color: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+@utility glass-card {
+  background-color: rgba(11, 17, 32, 0.8);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+@utility glow-blue {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+}
+
+@utility text-gradient {
+  background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(to right, var(--color-blue-400), var(--color-indigo-500));
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-geist-sans), sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
