@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Search, Plus, User as UserIcon, LogOut, Menu, X, Ghost } from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Search, Plus, User as UserIcon, LogOut, Menu, X, Ghost, GitBranch } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -12,9 +12,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
   const [user, setUser] = useState<any>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      router.push('/');
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -47,7 +58,7 @@ export default function Navbar() {
         </Link>
 
         {/* Search - Desktop */}
-        <div className="hidden md:flex flex-1 max-w-xl relative">
+        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-xl relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <Input
             value={searchQuery}
@@ -55,10 +66,16 @@ export default function Navbar() {
             placeholder="Search the future..."
             className="pl-10 h-10 bg-slate-900/50 border-slate-800 focus:ring-blue-500/50"
           />
-        </div>
+        </form>
 
         {/* Desktop Nav Actions */}
         <div className="hidden md:flex items-center gap-4">
+          <Link href="/repositories">
+            <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white gap-2">
+              <GitBranch className="w-4 h-4" />
+              Trends
+            </Button>
+          </Link>
           {user ? (
             <>
               <Link href="/wants/create">
@@ -112,7 +129,7 @@ export default function Navbar() {
             className="md:hidden border-t border-slate-800 bg-slate-950 overflow-hidden"
           >
             <div className="p-4 space-y-4">
-              <div className="relative">
+              <form onSubmit={handleSearch} className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <Input
                   value={searchQuery}
@@ -120,7 +137,7 @@ export default function Navbar() {
                   placeholder="Search..."
                   className="pl-10"
                 />
-              </div>
+              </form>
               {user ? (
                 <div className="grid grid-cols-1 gap-2">
                   <Link href="/wants/create" onClick={() => setIsMobileMenuOpen(false)}>

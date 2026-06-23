@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Want, Category } from '@/types/database';
 import { TrendingUp, Sparkles, Layers, ArrowRight, Ghost } from 'lucide-react';
@@ -13,7 +14,10 @@ import { FadeIn, SlideIn, PageTransition } from '@/components/ui/Motion';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
-export default function HomePage() {
+function HomeContent() {
+  const searchParams = useSearchParams();
+  const q = searchParams.get('q');
+
   const [wants, setWants] = useState<Want[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,12 +25,17 @@ export default function HomePage() {
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       // Get categories
       const { data: catData } = await supabase.from('categories').select('*');
       if (catData) setCategories(catData);
 
       // Get wants
       let query = supabase.from('wants').select('*, profiles(*), categories(*)');
+
+      if (q) {
+        query = query.or(`title.ilike.%\${q}%,description.ilike.%\${q}%`);
+      }
 
       if (activeTab === 'trending') {
         query = query.order('support_count', { ascending: false });
@@ -39,10 +48,10 @@ export default function HomePage() {
       setLoading(false);
     }
     fetchData();
-  }, [activeTab]);
+  }, [activeTab, q]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 selection:bg-blue-500/30">
+    <>
       <Navbar />
 
       <PageTransition>
@@ -188,6 +197,16 @@ export default function HomePage() {
           </div>
         </main>
       </PageTransition>
+    </>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-50 selection:bg-blue-500/30">
+      <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+        <HomeContent />
+      </Suspense>
     </div>
   );
 }

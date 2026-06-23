@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useCallback, useImperativeHandle, forwardRef } from 'react';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
-import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ImageUploadProps {
@@ -119,9 +120,11 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({ onImagesChan
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {files.map((item, index) => (
             <div key={index} className="relative aspect-square rounded-lg overflow-hidden group">
-              <img
+              <Image
                 src={item.preview}
                 alt="preview"
+                fill
+                unoptimized
                 className="w-full h-full object-cover"
               />
               {!uploading && (

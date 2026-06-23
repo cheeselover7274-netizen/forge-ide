@@ -1,10 +1,11 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { Want } from '@/types/database';
 import { ThumbsUp, MessageSquare, User as UserIcon, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { formatCurrency, formatDate } from '@/lib/format';
+import { formatDate } from '@/lib/format';
 import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 
@@ -64,8 +65,12 @@ export default function WantCard({ want, index = 0 }: WantCardProps) {
 
         <div className="px-6 py-4 bg-slate-900/30 border-t border-slate-800/50 flex items-center justify-between">
           <Link href={`/profile/${want.profiles?.username}`} className="flex items-center gap-2.5 text-xs text-slate-400 hover:text-white transition-colors">
-            <div className="w-6 h-6 bg-slate-800 rounded-full flex items-center justify-center border border-slate-700">
-              <UserIcon className="w-3 h-3" />
+            <div className="w-6 h-6 bg-slate-800 rounded-full flex items-center justify-center border border-slate-700 relative overflow-hidden">
+              {want.profiles?.avatar_url ? (
+                <Image src={want.profiles.avatar_url} alt={want.profiles.username} fill className="object-cover" />
+              ) : (
+                <UserIcon className="w-3 h-3" />
+              )}
             </div>
             <span className="font-medium">{want.profiles?.username}</span>
           </Link>

@@ -1,22 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { useParams, useRouter } from 'next/navigation';
 import { Want, Comment } from '@/types/database';
 import {
-  MessageSquare, Share2, ThumbsUp, User as UserIcon, Calendar,
+  MessageSquare, ThumbsUp, User as UserIcon, Calendar,
   DollarSign, ArrowLeft, MoreVertical, Trash, Edit, TrendingUp, BarChart3, Info
 } from 'lucide-react';
 import { formatDate, formatCurrency } from '@/lib/format';
-import { WantCardSkeleton } from '@/components/Skeletons';
 import { Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Input } from '@/components/ui/Input';
-import { FadeIn, PageTransition, SlideIn } from '@/components/ui/Motion';
+import { PageTransition, SlideIn } from '@/components/ui/Motion';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -91,7 +90,7 @@ export default function WantDetailPage() {
     if (!user || !commentText.trim()) return;
 
     setSubmittingComment(true);
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('comments')
       .insert([{ user_id: user.id, want_id: id, content: commentText }])
       .select('*, profiles(*)')
@@ -169,8 +168,8 @@ export default function WantDetailPage() {
 
               <div className="flex items-center gap-6 text-sm text-slate-500">
                 <Link href={`/profile/${want.profiles?.username}`} className="flex items-center gap-2.5 hover:text-white transition-colors group">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
-                    {want.profiles?.avatar_url ? <img src={want.profiles.avatar_url} className="rounded-full h-full w-full object-cover" /> : <UserIcon className="w-4 h-4 text-white" />}
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center relative overflow-hidden">
+                    {want.profiles?.avatar_url ? <Image src={want.profiles.avatar_url} alt={want.profiles.username} fill className="object-cover" /> : <UserIcon className="w-4 h-4 text-white" />}
                   </div>
                   <span className="font-bold">{want.profiles?.username}</span>
                 </Link>
@@ -186,7 +185,9 @@ export default function WantDetailPage() {
               {want.images.length > 0 && (
                 <div className="grid grid-cols-1 gap-6">
                   {want.images.map((img, i) => (
-                    <img key={i} src={img} alt="Product vision" className="rounded-2xl border border-slate-800 shadow-2xl w-full" />
+                    <div key={i} className="relative aspect-video w-full rounded-2xl border border-slate-800 shadow-2xl overflow-hidden">
+                      <Image src={img} alt="Product vision" fill className="object-cover" />
+                    </div>
                   ))}
                 </div>
               )}
@@ -228,8 +229,8 @@ export default function WantDetailPage() {
                   <SlideIn key={comment.id}>
                     <div className="flex gap-5">
                       <Link href={`/profile/${comment.profiles?.username}`} className="flex-shrink-0">
-                        <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center border border-slate-700 shadow-xl">
-                          {comment.profiles?.avatar_url ? <img src={comment.profiles.avatar_url} className="rounded-2xl h-full w-full object-cover" /> : <UserIcon className="w-6 h-6 text-slate-500" />}
+                        <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center border border-slate-700 shadow-xl relative overflow-hidden">
+                          {comment.profiles?.avatar_url ? <Image src={comment.profiles.avatar_url} alt={comment.profiles.username} fill className="object-cover" /> : <UserIcon className="w-6 h-6 text-slate-500" />}
                         </div>
                       </Link>
                       <div className="flex-1 space-y-2">

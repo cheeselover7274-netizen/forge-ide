@@ -16,7 +16,6 @@ export default function CreateWantPage() {
   const [tags, setTags] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
-  const [fetchingCategories, setFetchingCategories] = useState(true);
   const router = useRouter();
   const imageUploadRef = useRef<ImageUploadRef>(null);
 
@@ -24,7 +23,6 @@ export default function CreateWantPage() {
     async function getCategories() {
       const { data } = await supabase.from('categories').select('*');
       if (data) setCategories(data);
-      setFetchingCategories(false);
     }
     getCategories();
   }, []);
@@ -33,7 +31,6 @@ export default function CreateWantPage() {
     e.preventDefault();
     setLoading(true);
 
-    // 1. Get current user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       router.push('/login');
@@ -41,10 +38,8 @@ export default function CreateWantPage() {
     }
 
     try {
-      // 2. Trigger image upload if any
       const imageUrls = await imageUploadRef.current?.upload() || [];
 
-      // 3. Create the Want
       const { data, error } = await supabase.from('wants').insert([
         {
           user_id: user.id,

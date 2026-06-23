@@ -3,7 +3,7 @@ import { formatDistanceToNow } from 'date-fns';
 export function formatDate(date: string) {
   try {
     return formatDistanceToNow(new Date(date), { addSuffix: true });
-  } catch (e) {
+  } catch {
     return 'some time ago';
   }
 }

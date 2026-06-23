@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { Profile, Want } from '@/types/database';
-import { Loader2, User as UserIcon, Calendar, ThumbsUp, Layers, Link as LinkIcon, MessageSquare } from 'lucide-react';
+import { Loader2, User as UserIcon, Calendar, Layers, Link as LinkIcon } from 'lucide-react';
 import { formatDate } from '@/lib/format';
 import WantCard from '@/components/WantCard';
 import Link from 'next/link';
@@ -72,9 +73,9 @@ export default function ProfilePage() {
       <div className="bg-[#161B22] border-b border-[#30363D]">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="flex flex-col md:flex-row items-center md:items-end gap-8">
-            <div className="w-32 h-32 bg-gradient-to-br from-blue-600 to-purple-600 rounded-3xl flex items-center justify-center border-4 border-[#0B0F19] shadow-2xl overflow-hidden">
+            <div className="w-32 h-32 bg-gradient-to-br from-blue-600 to-purple-600 rounded-3xl flex items-center justify-center border-4 border-[#0B0F19] shadow-2xl overflow-hidden relative">
               {profile.avatar_url ? (
-                <img src={profile.avatar_url} className="w-full h-full object-cover" />
+                <Image src={profile.avatar_url} alt={profile.username || 'Avatar'} fill className="object-cover" />
               ) : (
                 <UserIcon className="w-16 h-16 text-white" />
               )}

@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useParams, useRouter } from 'next/navigation';
-import { Loader2, Plus, ArrowLeft, Save } from 'lucide-react';
-import ImageUpload, { ImageUploadRef } from '@/components/ImageUpload';
-import { Category, Want } from '@/types/database';
+import { Loader2, ArrowLeft, Save } from 'lucide-react';
+import { Category } from '@/types/database';
 import Link from 'next/link';
 
 export default function EditWantPage() {
@@ -19,7 +18,6 @@ export default function EditWantPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
-  const imageUploadRef = useRef<ImageUploadRef>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -50,7 +48,7 @@ export default function EditWantPage() {
       setLoading(false);
     }
     fetchData();
-  }, [id]);
+  }, [id, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
