@@ -1,0 +1,14 @@
+{"timestamp":"01:05:23.679","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/app/ghostmarket/src/app'"}
+{"timestamp":"01:05:23.695","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/app/ghostmarket/src/app'"}
+{"timestamp":"01:07:16.635","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/app/ghostmarket/src/app'"}
+{"timestamp":"01:07:16.653","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/app/ghostmarket/src/app'"}
+{"timestamp":"01:07:17.958","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/app/ghostmarket/src/app'"}
+{"timestamp":"01:07:17.965","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/app/ghostmarket/src/app'"}
+{"timestamp":"01:09:12.273","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/app/ghostmarket/src/app'"}
+{"timestamp":"01:09:12.278","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/app/ghostmarket/src/app'"}
+{"timestamp":"01:09:13.599","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/app/ghostmarket/src/app'"}
+{"timestamp":"01:09:13.615","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/app/ghostmarket/src/app'"}
+{"timestamp":"01:10:50.299","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/app/ghostmarket/src/app'"}
+{"timestamp":"01:10:50.303","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/app/ghostmarket/src/app'"}
+{"timestamp":"01:10:51.632","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/app/ghostmarket/src/app'"}
+{"timestamp":"01:10:51.641","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/app/ghostmarket/src/app'"}
